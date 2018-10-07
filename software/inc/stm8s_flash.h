@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm8s_flash.h
   * @author  MCD Application Team
-  * @version V2.2.0
-  * @date    30-September-2014
+  * @version V2.3.0
+  * @date    16-June-2017
   * @brief   This file contains all functions prototype and macros for the FLASH peripheral.
    ******************************************************************************
   * @attention
@@ -16,8 +16,8 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
+  * Unless required by applicable law or agreed to in writing, software 
+  * distributed under the License is distributed on an "AS IS" BASIS, 
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
@@ -58,21 +58,21 @@
  #define FLASH_BLOCK_SIZE                  ((uint8_t)128)       /*!< Number of bytes in a block (common for Program and Data memories) */
 #endif /* STM8S105 or STM8AF626x */
 
-#if defined(STM8S103) || defined(STM8S003) || defined(STM8S903) || defined(STM8AF622x)
+#if defined(STM8S103) || defined(STM8S003) || defined(STM8S001) || defined(STM8S903) || defined(STM8AF622x)
  #define FLASH_PROG_END_PHYSICAL_ADDRESS   ((uint32_t)0x9FFF)   /*!< Program memory: end address */
  #define FLASH_PROG_BLOCKS_NUMBER          ((uint16_t)128)      /*!< Program memory: total number of blocks */
  #define FLASH_DATA_START_PHYSICAL_ADDRESS ((uint32_t)0x004000) /*!< Data EEPROM memory: start address */
  #define FLASH_DATA_END_PHYSICAL_ADDRESS   ((uint32_t)0x00427F) /*!< Data EEPROM memory: end address */
  #define FLASH_DATA_BLOCKS_NUMBER          ((uint16_t)10)       /*!< Data EEPROM memory: total number of blocks */
  #define FLASH_BLOCK_SIZE                  ((uint8_t)64)        /*!< Number of bytes in a block (common for Program and Data memories) */
-#endif /* STM8S103 or STM8S003 or STM8S903 or STM8AF622x*/
+#endif /* STM8S103 or STM8S003 or STM8S001 or STM8S903 or STM8AF622x*/
 
 #define FLASH_RASS_KEY1 ((uint8_t)0x56) /*!< First RASS key */
 #define FLASH_RASS_KEY2 ((uint8_t)0xAE) /*!< Second RASS key */
 
 #define OPTION_BYTE_START_PHYSICAL_ADDRESS  ((uint16_t)0x4800)
 #define OPTION_BYTE_END_PHYSICAL_ADDRESS    ((uint16_t)0x487F)
-#define FLASH_OPTIONBYTE_ERROR              ((uint16_t)0x5555) /*!< Error code option byte
+#define FLASH_OPTIONBYTE_ERROR              ((uint16_t)0x5555) /*!< Error code option byte 
                                                                    (if value read is not equal to complement value read) */
 /**
   * @}
@@ -124,7 +124,7 @@ FLASH_LPMode_TypeDef;
   */
 typedef enum {
 #if defined (STM8S208) || defined(STM8S207) || defined(STM8S007) || defined(STM8S105) || \
-    defined(STM8S005) || defined (STM8AF52Ax) || defined (STM8AF62Ax) || defined(STM8AF626x)
+    defined(STM8S005) || defined (STM8AF52Ax) || defined (STM8AF62Ax) || defined(STM8AF626x)		
 		FLASH_STATUS_END_HIGH_VOLTAGE           = (uint8_t)0x40, /*!< End of high voltage */
 #endif /* STM8S208, STM8S207, STM8S105, STM8AF62Ax, STM8AF52Ax, STM8AF626x */
 		FLASH_STATUS_SUCCESSFUL_OPERATION       = (uint8_t)0x04, /*!< End of operation flag */
@@ -211,7 +211,7 @@ typedef enum {
                                         ((TIME) == FLASH_PROGRAMTIME_TPROG))
 
 /**
-  * @brief  Macro used by the assert function in order to check the different
+  * @brief  Macro used by the assert function in order to check the different 
   *         sensitivity values for the low power mode
   */
 
@@ -221,7 +221,7 @@ typedef enum {
     ((LPMODE) == FLASH_LPMODE_STANDBY_POWERDOWN))
 
 /**
-  * @brief  Macro used by the assert function in order to check the different
+  * @brief  Macro used by the assert function in order to check the different 
   *         sensitivity values for the option bytes Address
   */
 #define IS_OPTION_BYTE_ADDRESS_OK(ADDRESS) (((ADDRESS) >= OPTION_BYTE_START_PHYSICAL_ADDRESS) && \
@@ -238,7 +238,7 @@ typedef enum {
                                  ((FLAG) == FLASH_FLAG_EOP) || \
                                  ((FLAG) == FLASH_FLAG_PUL) || \
                                  ((FLAG) == FLASH_FLAG_WR_PG_DIS))
-#else /* STM8S103, STM8S903, STM8AF622x */
+#else /* STM8S103, STM8S001, STM8S903, STM8AF622x */
  #define IS_FLASH_FLAGS_OK(FLAG) (((FLAG) == FLASH_FLAG_DUL) || \
                                  ((FLAG) == FLASH_FLAG_EOP) || \
                                  ((FLAG) == FLASH_FLAG_PUL) || \
@@ -273,20 +273,20 @@ FlagStatus FLASH_GetFlagStatus(FLASH_Flag_TypeDef FLASH_FLAG);
 
 /**
 @code
- All the functions declared below must be executed from RAM exclusively, except
+ All the functions declared below must be executed from RAM exclusively, except 
  for the FLASH_WaitForLastOperation function which can be executed from Flash.
-
+ 
  Steps of the execution from RAM differs from one toolchain to another.
  for more details refer to stm8s_flash.c file.
-
- To enable execution from RAM you can either uncomment the following define
+ 
+ To enable execution from RAM you can either uncomment the following define 
  in the stm8s.h file or define it in your toolchain compiler preprocessor
- - #define RAM_EXECUTION  (1)
+ - #define RAM_EXECUTION  (1) 
 
 @endcode
 */
 IN_RAM(void FLASH_EraseBlock(uint16_t BlockNum, FLASH_MemType_TypeDef FLASH_MemType));
-IN_RAM(void FLASH_ProgramBlock(uint16_t BlockNum, FLASH_MemType_TypeDef FLASH_MemType,
+IN_RAM(void FLASH_ProgramBlock(uint16_t BlockNum, FLASH_MemType_TypeDef FLASH_MemType, 
                         FLASH_ProgramMode_TypeDef FLASH_ProgMode, uint8_t *Buffer));
 IN_RAM(FLASH_Status_TypeDef FLASH_WaitForLastOperation(FLASH_MemType_TypeDef FLASH_MemType));
 

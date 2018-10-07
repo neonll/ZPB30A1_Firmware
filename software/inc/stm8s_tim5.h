@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm8s_tim5.h
   * @author  MCD Application Team
-  * @version V2.2.0
-  * @date    30-September-2014
+  * @version V2.3.0
+  * @date    16-June-2017
   * @brief   This file contains all functions prototype and macros for the TIM5 peripheral.
    ******************************************************************************
   * @attention
@@ -16,8 +16,8 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
+  * Unless required by applicable law or agreed to in writing, software 
+  * distributed under the License is distributed on an "AS IS" BASIS, 
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
@@ -275,7 +275,7 @@ typedef enum
     ((SOURCE) == TIM5_TRGOSOURCE_OC1)    || \
     ((SOURCE) == TIM5_TRGOSOURCE_OC1REF) || \
     ((SOURCE) == TIM5_TRGOSOURCE_OC2REF))
-
+  
 /** TIM5 Flags */
 typedef enum
 {
@@ -320,7 +320,7 @@ typedef enum
     ((MODE) == TIM5_SLAVEMODE_GATED)   || \
     ((MODE) == TIM5_SLAVEMODE_TRIGGER) || \
     ((MODE) == TIM5_SLAVEMODE_EXTERNAL1))
-
+    
 /**
   * @brief  TIM5 Internal Trigger Selection
   */
@@ -360,7 +360,7 @@ typedef enum
    (((MODE) == TIM5_ENCODERMODE_TI1) || \
     ((MODE) == TIM5_ENCODERMODE_TI2) || \
     ((MODE) == TIM5_ENCODERMODE_TI12))
-
+    
 /**
   * @brief  TIM5 External Trigger Prescaler
   */
@@ -380,7 +380,7 @@ typedef enum
     ((PRESCALER) == TIM5_EXTTRGPSC_DIV2) || \
     ((PRESCALER) == TIM5_EXTTRGPSC_DIV4) || \
     ((PRESCALER) == TIM5_EXTTRGPSC_DIV8))
-
+    
 /**
   * @brief  TIM5 External Trigger Polarity
   */
@@ -396,7 +396,7 @@ typedef enum
 #define IS_TIM5_EXT_POLARITY_OK(POLARITY) \
    (((POLARITY) == TIM5_EXTTRGPOLARITY_INVERTED) || \
     ((POLARITY) == TIM5_EXTTRGPOLARITY_NONINVERTED))
-
+    
 /**
   * @brief  Macro TIM5 External Trigger Filter
   */
@@ -469,10 +469,5 @@ void TIM5_EncoderInterfaceConfig(TIM5_EncoderMode_TypeDef TIM5_EncoderMode, TIM5
   */
 
 #endif /* __STM8S_TIM5_H */
-
-/**
-  * @}
-  */
-
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

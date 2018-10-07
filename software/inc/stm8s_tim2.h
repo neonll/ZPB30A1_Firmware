@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm8s_tim2.h
   * @author  MCD Application Team
-  * @version V2.2.0
-  * @date    30-September-2014
+  * @version V2.3.0
+  * @date    16-June-2017
   * @brief   This file contains all functions prototype and macros for the TIM2 peripheral.
    ******************************************************************************
   * @attention
@@ -16,8 +16,8 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
+  * Unless required by applicable law or agreed to in writing, software 
+  * distributed under the License is distributed on an "AS IS" BASIS, 
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
@@ -269,7 +269,7 @@ typedef enum
                                    ((FLAG) == TIM2_FLAG_CC3OF))
 
 #define IS_TIM2_CLEAR_FLAG_OK(FLAG) ((((uint16_t)(FLAG) & 0xF1F0) == 0x0000) && ((uint16_t)(FLAG) != 0x0000))
-
+                                    
 /**
   * @}
   */
@@ -333,10 +333,5 @@ void TIM2_ClearITPendingBit(TIM2_IT_TypeDef TIM2_IT);
   */
 
 #endif /* __STM8S_TIM2_H */
-
-/**
-  * @}
-  */
-
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

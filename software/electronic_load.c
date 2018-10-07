@@ -78,7 +78,7 @@ uint16_t          max_values[4]   = {
 	60000, // 60W
 	50000, // 50Ω
 	28000, // 28V
-}
+};
 volatile uint32_t millis          = 0;
 volatile uint32_t ampere_seconds  = 0;
 volatile uint32_t watt_seconds    = 0;
@@ -99,11 +99,11 @@ volatile uint32_t watt_seconds    = 0;
 //                0x51
 #define MEM_TOUT  0x52
 //                0x53
-#define MEM_CUTV  0x54
+//#define MEM_CUTV  0x54
 //                0x55
-#define MEM_CUTV  0x56
+//#define MEM_CUTV  0x56
 //                0x57
-#define MEM_CUTV  0x58
+//#define MEM_CUTV  0x58
 //                0x59
 
 battery_voltage_t voltages[] = {
@@ -436,7 +436,7 @@ void tempFan() {
 }
 
 uint8_t select(char *opts, uint8_t num_opts, uint8_t selected) {
-	uint8_t old_opt = -1;
+	uint8_t old_opt = 0;		//was -1
 	while (1) {
 		if(encoder_val < 0){if(!selected){selected=num_opts;}selected--;}
 		else {if(encoder_val > 0){selected++;if(selected == num_opts)selected=0;}}
@@ -501,7 +501,7 @@ void selectMode(void) {
 	char subopts[][4] = {"CC@","CW@","CR@","CV@"};
 	while (1) {
 		blinkDisplay(DP_BOT);
-		set_mode = change_u8(set_mode, 2);
+		set_mode = change_u8(set_mode, 2);		//CV mode not supported yet
 		if (option_changed) {
 			option_changed = 0;
 			encoder_val = 0;
@@ -563,6 +563,7 @@ uint16_t selectUInt16(uint16_t val, uint16_t max) {
 		}
 		val = change_u16(val, max, inc);
 
+	}
 }
 
 void selectValue(void) {
@@ -570,6 +571,7 @@ void selectValue(void) {
 	bool hl_opt = 0;
 	uint16_t inc = 10;
 	option_changed = 1;
+	char opts[][5] = {"MODE", "VAL@", "SHDN", "CUTO", "BEEP"};
 	showText(opts[set_mode], DP_TOP);
 	disp_write(digits[3], LED_HIGH, DP_BOT);
 	while (1) {
@@ -689,7 +691,7 @@ void showMenu(void) {
 					break;
 				case 1:
 					showText(mode_name[set_mode], DP_TOP);
-					set_values[set_mode] = selectUInt16(uint16_t set_values[set_mode], uint16_t max_values[set_mode]);
+					set_values[set_mode] = selectUInt16(set_values[set_mode], max_values[set_mode]);
 					write16((set_mode + 1) << 4, set_values[set_mode]);
 					break;
 				case 2:
@@ -715,6 +717,17 @@ void showMenu(void) {
 			return;
 		}
 	}
+}
+
+int putchar(int c) {
+#ifdef STM8S003
+	UART1->DR = c;
+	while (!(UART1->SR & (uint8_t)UART1_FLAG_TXE));
+#else
+	UART2->DR = (char) c;
+	while (!(UART2->SR & (uint8_t)UART2_FLAG_TXE));
+#endif
+return c;
 }
 
 void main(void) {
@@ -806,6 +819,8 @@ void main(void) {
 		run_pressed = 0;
 		disp_write(digits[3], 0, DP_BOT);
 	}
+	
+/*	
 	while (1) {
 		showNumber((uint16_t)millis, 2, DP_TOP);
 	}
@@ -848,14 +863,13 @@ void main(void) {
 				//showNumber((TIM1->CCR1H << 8) | TIM1->CCR1L, 0, DP_TOP);
 				showNumber(ma, 3, DP_TOP);
 				showNumber(pwm, 0, DP_BOT);
-				/*
 				if (ma < 1000)
 					showNumber(ma, 0, DP_BOT);
 				else if (ma < 10000)
 					showNumber(ma / 10, 2, DP_BOT);
 				else if (ma < 100000)
 					showNumber(ma / 100, 1, DP_BOT);
-				*/
+				*//*
 				chng = 0;
 				encoder_val = 0;
 				printf("%d\n", pwm);
@@ -913,7 +927,7 @@ void main(void) {
 		showNumber(v1 % 10, 0, DP_BOT);
 		delay(300000);
 	}
-	*/
+	*//*
 	while (1) {
 		uint16_t v1, v_ref, v2, v_load, v;
 		v1 = analogRead12(ADC1_CHANNEL_1);
@@ -940,18 +954,9 @@ void main(void) {
 		disp_write(digits[3], chars[v % 10], DP_TOP);
 		delay(300000);
 	}
-	
+*/	
 }
 
-void putchar(char c) {
-#ifdef STM8S003
-	UART1->DR = c;
-	while (!(UART1->SR & (uint8_t)UART1_FLAG_TXE));
-#else
-	UART2->DR = c;
-	while (!(UART2->SR & (uint8_t)UART2_FLAG_TXE));
-#endif
-}
 uint8_t _encoder_dir = 0xFF;
 void GPIOB_Handler() __interrupt(4) {
 	uint8_t cur = (GPIOB->IDR >> 4) & 3;

@@ -3,7 +3,7 @@
 
 #include "stm8s.h"
 
-#include "delay.h"
+//#include "delay.h"
 #include "stm8s_adc1.h"
 //#include "stm8s_adc2.h"
 //#include "stm8s_awu.h"
