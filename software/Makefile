@@ -1,7 +1,7 @@
 CC=sdcc
 CFLAGS=-mstm8
 DEFINES=STM8S005
-PROCESSOR=stm8s005k6
+PROCESSOR=STM8S005K6
 SOURCE=electronic_load.c
 OUTPUT_DIR=build/
 OUTPUT_FW=firmware/
@@ -26,7 +26,7 @@ clean:
 	rm $(OUTPUT_DIR)/*
 
 flash_windows:
-	stvp_cmdline -BoardName=ST-LINKV2 -Device=$(PROCESSOR) -Port=USB -ProgMode=SWIM \
+	stvp_cmdline -BoardName=ST-LINK -Device=$(PROCESSOR) -Port=USB -ProgMode=SWIM \
 	-verbose -no_loop -no_log \
 	-FileProg=$(OUTPUT_FW)$(OUTPUT_FILE).hex
 

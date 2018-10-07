@@ -6,6 +6,7 @@
 #include "stdio.h"
 
 bool dot;
+bool logging = 0;
 
 void delay(uint32_t d) {
 	while (d != 0) {
@@ -134,6 +135,24 @@ battery_voltage_t voltages[] = {
 	}
 };
 
+void UART2_DeInit(void)		//taken from SPL stm8s_uart2.c
+{
+  /*  Clear the Idle Line Detected bit in the status register by a read
+  to the UART2_SR register followed by a Read to the UART2_DR register */
+  (void) UART2->SR;
+  (void)UART2->DR;
+  
+  UART2->BRR2 = UART2_BRR2_RESET_VALUE;  /*  Set UART2_BRR2 to reset value 0x00 */
+  UART2->BRR1 = UART2_BRR1_RESET_VALUE;  /*  Set UART2_BRR1 to reset value 0x00 */
+  
+  UART2->CR1 = UART2_CR1_RESET_VALUE; /*  Set UART2_CR1 to reset value 0x00  */
+  UART2->CR2 = UART2_CR2_RESET_VALUE; /*  Set UART2_CR2 to reset value 0x00  */
+  UART2->CR3 = UART2_CR3_RESET_VALUE; /*  Set UART2_CR3 to reset value 0x00  */
+  UART2->CR4 = UART2_CR4_RESET_VALUE; /*  Set UART2_CR4 to reset value 0x00  */
+  UART2->CR5 = UART2_CR5_RESET_VALUE; /*  Set UART2_CR5 to reset value 0x00  */
+  UART2->CR6 = UART2_CR6_RESET_VALUE; /*  Set UART2_CR6 to reset value 0x00  */
+}
+
 void setupUART(void) {
 	uint32_t Mant, Mant100;
 	Mant = ((uint32_t)F_CPU / (BAUDR << 4));
@@ -142,9 +161,13 @@ void setupUART(void) {
 	UART1->BRR2  = (uint8_t)((uint8_t)(((Mant100 - (Mant * 100)) << 4) / 100) & (uint8_t)0x0F);
 	UART1->BRR2 |= (uint8_t)((Mant >> 4) & (uint8_t)0xF0);
 	UART1->BRR1  = (uint8_t)Mant;
+	UART1->CR2 = UART1_CR2_TEN | UART1_CR2_REN;
 #else
+	UART2_DeInit();
 	UART2->BRR2 = (uint8_t)(((uint8_t)(((Mant100 - (Mant * 100)) << 4) / 100) & (uint8_t)0x0F) | ((Mant >> 4) & (uint8_t)0xF0));
 	UART2->BRR1 = (uint8_t)Mant;
+	UART2->CR2 = UART2_CR2_TEN | UART2_CR2_REN;
+	UART2->CR2 |= (uint8_t)((uint8_t)1 << (uint8_t)((uint8_t)0x0205 & (uint8_t)0x0F)); //enable RX interrupt
 #endif
 }
 
@@ -199,12 +222,6 @@ void setup(void) {
 	ADC1->CR1 |= ADC1_CR1_ADON;
 	
 	setupUART();
-#ifdef STM8S003
-	UART1->CR2 = UART1_CR2_TEN | UART1_CR2_REN;
-#else
-	UART2->CR2 = UART2_CR2_TEN | UART2_CR2_REN;
-#endif
-	
 	/*
 	BEEP->CSR |= BEEP_CALIBRATION_DEFAULT;
 	BEEP->CSR |= BEEP_FREQUENCY_2KHZ;
@@ -730,6 +747,10 @@ int putchar(int c) {
 return c;
 }
 
+int getchar(void) {
+	return UART2->DR;
+}
+
 void main(void) {
 	setup();
 	set_mode = read8(MEM_MODE);
@@ -763,6 +784,7 @@ void main(void) {
 		running = 1;
 		setFan();
 		start_time = millis;
+
 		while (!run_pressed && error == ERROR_NONE) {
 			getVoltage();
 			if (voltage > 3000) {
@@ -785,7 +807,7 @@ void main(void) {
 						showNumber(ampere_seconds / 3600, 3, DP_TOP);
 						break;
 					case 2:
-						showNumber(watt_seconds / HOUR, 3, DP_TOP);
+						showNumber(watt_seconds / 3600, 3, DP_TOP);
 						break;
 					case 3:
 						showNumber(temperature, 1, DP_TOP);
@@ -794,8 +816,12 @@ void main(void) {
 						timer = (millis - start_time) / MINUTE * 100 + ((millis - start_time) / 100) % 60;
 						showNumber(timer, 2, DP_TOP);
 				}
-				printf("%lu; %u; %u; %lu; %lu; %u\n", (millis - start_time), set_current, voltage, ampere_seconds, watt_seconds, temperature);
+				//printf("%lu; %u; %u; %lu; %lu; %u\n", (millis - start_time), set_current, voltage, ampere_seconds, watt_seconds, temperature);
 				//showNumber(analogRead(ADC1_CHANNEL_0), 4, DP_TOP);
+				if(logging){
+					printf("$%u;%u;%lu;%lu;%u\r\n", set_current, voltage, ampere_seconds, watt_seconds, temperature);
+				}
+
 				showNumber(set_current, 3, DP_BOT);
 				disp_write(digits[3], LED_RUN | (1 << s_var), DP_BOT);
 				redraw = 0;
@@ -823,6 +849,10 @@ void main(void) {
 /*	
 	while (1) {
 		showNumber((uint16_t)millis, 2, DP_TOP);
+		while ((UART2->SR & (uint8_t)UART2_SR_RXNE)){
+			rcvBuff[countRx++] = (char) getchar();
+		}
+		printf("%s", rcvBuff);*
 	}
 	while (1) {
 		uint16_t pwm = 0;
@@ -990,7 +1020,7 @@ void TIM2_UPD_OVF_Handler() __interrupt(13) {
 	if (millis % 100 == 0 && running) {
 		// watts can be 60000 max.
 		uint32_t watt = set_current;
-		watt *= voltage;
+		watt *= voltage/100; 
 		watt_seconds += watt;
 		ampere_seconds += set_current;
 	}
@@ -998,3 +1028,17 @@ void TIM2_UPD_OVF_Handler() __interrupt(13) {
 		calc_fan = 1;
 	}
 }
+
+void UART2_RX_IRQHandler() __interrupt(21){
+	char tmp = UART2->DR;
+	if(tmp == 'S'){	//start command from LogView
+		printf("$N$;Electronic Load\r\n");
+		printf("$C$;Current [A,I];Voltage [V,U];Ampere/h[A/h];Watt/h[W/h];Temperature[°C,T]\r\n");
+		printf("$F$;0.001;0.01;0.00028;0.00028;1\r\n");
+		logging = 1;
+	}
+	else if(tmp == 'E') {
+		printf("End of logging");
+		logging = 0;
+	}
+}	
