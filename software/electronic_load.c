@@ -71,18 +71,18 @@ char              mode_name[][5]  = {
 };
 uint16_t          set_values[4]; // CC/CW/CR/CV
 uint16_t          cutoff_voltage  = 270;
-uint16_t          temperature     = 0;
-uint16_t          voltage         = 0;
-uint16_t          set_current     = 0;
+uint16_t          temperature     = 0;	// 0,1°C
+uint16_t          voltage         = 0;	// 0,01V
+uint16_t          set_current     = 0;	// 0,001A
 uint16_t          max_values[4]   = {
 	10000, // 10A
 	60000, // 60W
 	50000, // 50Ω
 	28000, // 28V
 };
-volatile uint32_t millis          = 0;
-volatile uint32_t ampere_seconds  = 0;
-volatile uint32_t watt_seconds    = 0;
+volatile uint32_t millis          = 0;	// milliseconds
+volatile uint32_t mAmpere_seconds  = 0;	//mAs
+volatile uint32_t mWatt_seconds    = 0;	//mWs
 
 #define MEM_CHECK 0x00
 #define MEM_MODE  0x01
@@ -351,10 +351,11 @@ void getTemp(void) {
 void getVoltage(void) {
 	uint16_t v1, v_ref, v2, v_load;
 	v1 = analogRead12(ADC1_CHANNEL_1);
-	v_load = 1.02217839986557 * v1 - 81.5878664441528;
+	//v_load = 1.02217839986557 * v1 - 81.5878664441528;
+	v_load = 1.00556 * v1 - 85.6211;		//my new calibration
 	v2 = analogRead12(ADC1_CHANNEL_2);
 	v_ref = 0.891348658196074 * v2 - 80.4250357289787;
-	if (v1 > 20) {
+	if (v1 > 85) {
 		voltage = v_load;
 		if (v_ref >= v_load && v_ref < v_load + 100) {
 			voltage = v_ref;
@@ -804,10 +805,10 @@ void main(void) {
 						showNumber(voltage, 2, DP_TOP);
 						break;
 					case 1:
-						showNumber(ampere_seconds / 3600, 3, DP_TOP);
+						showNumber(mAmpere_seconds / 3600, 3, DP_TOP);
 						break;
 					case 2:
-						showNumber(watt_seconds / 3600, 3, DP_TOP);
+						showNumber(mWatt_seconds / 3600, 3, DP_TOP);
 						break;
 					case 3:
 						showNumber(temperature, 1, DP_TOP);
@@ -816,10 +817,10 @@ void main(void) {
 						timer = (millis - start_time) / MINUTE * 100 + ((millis - start_time) / 100) % 60;
 						showNumber(timer, 2, DP_TOP);
 				}
-				//printf("%lu; %u; %u; %lu; %lu; %u\n", (millis - start_time), set_current, voltage, ampere_seconds, watt_seconds, temperature);
+				//printf("%lu; %u; %u; %lu; %lu; %u\n", (millis - start_time), set_current, voltage, mAmpere_seconds, mWatt_seconds, temperature);
 				//showNumber(analogRead(ADC1_CHANNEL_0), 4, DP_TOP);
 				if(logging){
-					printf("$%u;%u;%lu;%lu;%u\r\n", set_current, voltage, ampere_seconds, watt_seconds, temperature);
+					printf("$%u;%u;%lu;%lu;%u\r\n", set_current, voltage, mAmpere_seconds, mWatt_seconds, temperature);
 				}
 
 				showNumber(set_current, 3, DP_BOT);
@@ -1019,10 +1020,11 @@ void TIM2_UPD_OVF_Handler() __interrupt(13) {
 	}
 	if (millis % 100 == 0 && running) {
 		// watts can be 60000 max.
-		uint32_t watt = set_current;
-		watt *= voltage/100; 
-		watt_seconds += watt;
-		ampere_seconds += set_current;
+		uint32_t mWatt = set_current;
+		mWatt *= voltage;
+		mWatt /= 100;	//voltage is in 0,01V unit 
+		mWatt_seconds += mWatt;
+		mAmpere_seconds += set_current;
 	}
 	if (millis % 5000 == 0) {
 		calc_fan = 1;
@@ -1033,8 +1035,8 @@ void UART2_RX_IRQHandler() __interrupt(21){
 	char tmp = UART2->DR;
 	if(tmp == 'S'){	//start command from LogView
 		printf("$N$;Electronic Load\r\n");
-		printf("$C$;Current [A,I];Voltage [V,U];Ampere/h[A/h];Watt/h[W/h];Temperature[°C,T]\r\n");
-		printf("$F$;0.001;0.01;0.00028;0.00028;1\r\n");
+		printf("$C$;Current [A,I];Voltage [V,U];Ampere hour[Ah];Watt hour[Wh];Temperature[°C,T]\r\n");
+		printf("$F$;0.001;0.01;0.000000277778;0.000000277778;0,1\r\n");	//convert units for logview
 		logging = 1;
 	}
 	else if(tmp == 'E') {
