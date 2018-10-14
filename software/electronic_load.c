@@ -2,25 +2,33 @@
 #define BAUDR 115200L
 #define _MEM_(mem_addr) (*(volatile uint8_t *)(mem_addr))
 
-#include "stm8s_conf.h"
-#include "stdio.h"
-
-bool dot;
-bool logging = 0;
-
-void delay(uint32_t d) {
-	while (d != 0) {
-		d--;
-	}
-}
-#include "tm1650.h"
-
 #define DP_TOP GPIO_PIN_7
 #define DP_BOT GPIO_PIN_6
 #define OVERSAMPLING 2
 
 #define MINUTE   6000
 #define HOUR   360000
+
+#define MEM_CHECK 0x00
+#define MEM_MODE  0x01
+#define MEM_BEEP  0x02
+#define MEM_CUTO  0x03
+#define MEM_CC    0x10
+//                0x11
+#define MEM_CW    0x20
+//                0x21
+#define MEM_CR    0x30
+//                0x31
+#define MEM_CV    0x40
+//                0x41
+#define MEM_CUTV  0x50
+//                0x51
+#define MEM_TOUT  0x52
+//                0x53
+
+#include "stm8s_conf.h"
+#include "stdio.h"
+#include "tm1650.h"
 
 typedef struct {
 	uint16_t charged_voltage;
@@ -44,6 +52,8 @@ typedef enum {
 	ERROR_PWR,  // Insufficient power source
 } error_t;
 
+bool              dot;
+bool              logging         = 0;
 volatile bool     encoder_pressed = 0;
 volatile bool     run_pressed     = 0;
 volatile bool     calc_fan        = 0;
@@ -80,32 +90,9 @@ uint16_t          max_values[4]   = {
 	50000, // 50Ω
 	28000, // 28V
 };
-volatile uint32_t millis          = 0;	// milliseconds
+volatile uint32_t millis          = 0;	// 10 milliseconds
 volatile uint32_t mAmpere_seconds  = 0;	//mAs
 volatile uint32_t mWatt_seconds    = 0;	//mWs
-
-#define MEM_CHECK 0x00
-#define MEM_MODE  0x01
-#define MEM_BEEP  0x02
-#define MEM_CUTO  0x03
-#define MEM_CC    0x10
-//                0x11
-#define MEM_CW    0x20
-//                0x21
-#define MEM_CR    0x30
-//                0x31
-#define MEM_CV    0x40
-//                0x41
-#define MEM_CUTV  0x50
-//                0x51
-#define MEM_TOUT  0x52
-//                0x53
-//#define MEM_CUTV  0x54
-//                0x55
-//#define MEM_CUTV  0x56
-//                0x57
-//#define MEM_CUTV  0x58
-//                0x59
 
 battery_voltage_t voltages[] = {
 	{
@@ -135,22 +122,19 @@ battery_voltage_t voltages[] = {
 	}
 };
 
-void UART2_DeInit(void)		//taken from SPL stm8s_uart2.c
-{
-  /*  Clear the Idle Line Detected bit in the status register by a read
-  to the UART2_SR register followed by a Read to the UART2_DR register */
-  (void) UART2->SR;
-  (void)UART2->DR;
-  
-  UART2->BRR2 = UART2_BRR2_RESET_VALUE;  /*  Set UART2_BRR2 to reset value 0x00 */
-  UART2->BRR1 = UART2_BRR1_RESET_VALUE;  /*  Set UART2_BRR1 to reset value 0x00 */
-  
-  UART2->CR1 = UART2_CR1_RESET_VALUE; /*  Set UART2_CR1 to reset value 0x00  */
-  UART2->CR2 = UART2_CR2_RESET_VALUE; /*  Set UART2_CR2 to reset value 0x00  */
-  UART2->CR3 = UART2_CR3_RESET_VALUE; /*  Set UART2_CR3 to reset value 0x00  */
-  UART2->CR4 = UART2_CR4_RESET_VALUE; /*  Set UART2_CR4 to reset value 0x00  */
-  UART2->CR5 = UART2_CR5_RESET_VALUE; /*  Set UART2_CR5 to reset value 0x00  */
-  UART2->CR6 = UART2_CR6_RESET_VALUE; /*  Set UART2_CR6 to reset value 0x00  */
+void delay(uint32_t d) {
+	while (d != 0) {
+		d--;
+	}
+}
+
+void delay10ms(uint32_t d){
+	uint32_t start = millis;
+	while(millis < start + d);
+}
+
+void opt_write(void){
+
 }
 
 void setupUART(void) {
@@ -163,7 +147,6 @@ void setupUART(void) {
 	UART1->BRR1  = (uint8_t)Mant;
 	UART1->CR2 = UART1_CR2_TEN | UART1_CR2_REN;
 #else
-	UART2_DeInit();
 	UART2->BRR2 = (uint8_t)(((uint8_t)(((Mant100 - (Mant * 100)) << 4) / 100) & (uint8_t)0x0F) | ((Mant >> 4) & (uint8_t)0xF0));
 	UART2->BRR1 = (uint8_t)Mant;
 	UART2->CR2 = UART2_CR2_TEN | UART2_CR2_REN;
@@ -222,14 +205,7 @@ void setup(void) {
 	ADC1->CR1 |= ADC1_CR1_ADON;
 	
 	setupUART();
-	/*
-	BEEP->CSR |= BEEP_CALIBRATION_DEFAULT;
-	BEEP->CSR |= BEEP_FREQUENCY_2KHZ;
-	BEEP->CSR |= BEEP_CSR_BEEPEN;
-	delay(10000000);
-	BEEP->CSR &= ~BEEP_CSR_BEEPEN;
-	*/
-	
+
 	EXTI->CR2    = EXTI_SENSITIVITY_FALL_ONLY; // TLI
 	EXTI->CR1   |= EXTI_SENSITIVITY_RISE_FALL << 2; // GPIOB
 	EXTI->CR1   |= EXTI_SENSITIVITY_RISE_FALL << 4; // GPIOC
@@ -261,7 +237,7 @@ void setup(void) {
 	TIM1->CR1   |= TIM1_CR1_CEN | TIM1_CR1_ARPE;
 	TIM1->BKR   |= TIM1_BKR_MOE;
 	
-	// 20000 gives an interrupt frequency of 100 Hz
+	// 20000 gives an interrupt frequency of 100 Hz -> 10ms
 	TIM2->ARRH   = 0x4E;
 	TIM2->ARRL   = 0x20;
 	TIM2->PSCR   = TIM2_PRESCALER_8;
@@ -271,7 +247,32 @@ void setup(void) {
 	// Unlock flash
 	FLASH->DUKR = FLASH_RASS_KEY2;
 	FLASH->DUKR = FLASH_RASS_KEY1;
-	//while (!(FLASH->IAPSR & (1 << FLASH_IAPSR_DUL)));
+	while (!(FLASH->IAPSR & FLASH_IAPSR_DUL));
+
+	// Set option bytes because of buzzer, not working yet
+	/*if(OPT->OPT2 != 0x80 || OPT->OPT3 != 0x08){
+		FLASH->CR2 |= FLASH_CR2_OPT; // unlock option bytes for writing
+ 		FLASH->NCR2 &= (uint8_t)(~FLASH_NCR2_NOPT);
+		while (!(FLASH->IAPSR & FLASH_IAPSR_DUL));
+
+		OPT->OPT2 = 0x80; // enable LSI clock source
+		OPT->NOPT2 = 0x7f;
+		OPT->OPT3 = 0x08; // set PD4 as alternative buzzer output
+		OPT->NOPT3 = 0xf7;
+		while (!(FLASH->IAPSR & FLASH_IAPSR_EOP)); // wait for write finish
+
+		FLASH->CR2 &= (uint8_t)(~FLASH_CR2_OPT);	// lock back
+  		FLASH->NCR2 |= FLASH_NCR2_NOPT;
+	}*/
+
+	// Setup buzzer
+	// For buzzer working you must set option bytes: AFR7 - port D4 alternate function = BEEP and LSI_EN - LSI clock enable as CPU clock source
+	// You can do this e.g. from graphic STVP
+	BEEP->CSR &= ~BEEP_CSR_BEEPEN; // Disable Buzzer
+    BEEP->CSR &= ~BEEP_CSR_BEEPDIV; // Clear DIV register
+    BEEP->CSR |= BEEP_CALIBRATION_DEFAULT; // Set register with default calibration
+ 	BEEP->CSR &= ~BEEP_CSR_BEEPSEL; // Clear SEL register
+ 	BEEP->CSR |= BEEP_FREQUENCY_2KHZ; // Set frequency of buzzer to 2kHz
 }
 
 uint8_t read8(uint16_t address) {
@@ -778,6 +779,11 @@ void main(void) {
 #endif
 	printf("LOAD READY\n");
 	__asm__ ("rim");
+
+	BEEP->CSR |= BEEP_CSR_BEEPEN; // Enable buzzer
+	delay10ms(20);
+	BEEP->CSR &= ~BEEP_CSR_BEEPEN;
+
 	while (1) {
 		uint32_t start_time;
 		showMenu();
@@ -882,7 +888,6 @@ void main(void) {
 			//delay(300000);
 			disp_write(digits[0], chars[GPIOC->IDR & GPIO_PIN_2], DP_BOT);
 			if (chng) {
-				/*
 				//showNumber(pwm, 1, DP_TOP);
 				uint32_t set_pwm = 2119;
 				set_pwm *= ma;
@@ -951,14 +956,12 @@ void main(void) {
 	//while (1) {
 	//	showMenu();
 	//}
-	/*
 	while (1) {
 		uint16_t v1 = analogRead12(ADC1_CHANNEL_2);
 		showNumber(v1 / 10, 0, DP_TOP);
 		showNumber(v1 % 10, 0, DP_BOT);
 		delay(300000);
 	}
-	*//*
 	while (1) {
 		uint16_t v1, v_ref, v2, v_load, v;
 		v1 = analogRead12(ADC1_CHANNEL_1);
@@ -1013,8 +1016,9 @@ void GPIOD_Handler() __interrupt(6) {
 }
 // TIM2 UO (CC = 14)
 void TIM2_UPD_OVF_Handler() __interrupt(13) {
-	millis++;
 	TIM2->SR1 &= ~TIM2_SR1_UIF;
+
+	millis++;
 	if (millis % 50 == 0) {
 		redraw = 1;
 	}
