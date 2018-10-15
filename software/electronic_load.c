@@ -353,9 +353,10 @@ void getVoltage(void) {
 	uint16_t v1, v_ref, v2, v_load;
 	v1 = analogRead12(ADC1_CHANNEL_1);
 	//v_load = 1.02217839986557 * v1 - 81.5878664441528;
-	v_load = 1.00556 * v1 - 85.6211;		//my new calibration
+	v_load = 1.012877085 * v1 - 84.025827; // my new calibration with precision measuring
 	v2 = analogRead12(ADC1_CHANNEL_2);
-	v_ref = 0.891348658196074 * v2 - 80.4250357289787;
+	//v_ref = 0.891348658196074 * v2 - 80.4250357289787;
+	v_ref = 0.8921068686 * v2 - 83.353412; // my new calibration with precision measuring
 	if (v1 > 85) {
 		voltage = v_load;
 		if (v_ref >= v_load && v_ref < v_load + 100) {
@@ -373,7 +374,7 @@ void calcPWM(void) {
 			break;
 		case MODE_CW: // I = P / U
 			current = set_values[MODE_CW];
-			current *= 100;
+			current *= 100; //voltage is in V/100
 			current /= voltage;
 			break;
 		case MODE_CR: // I = U / R
@@ -382,14 +383,14 @@ void calcPWM(void) {
 			current /= set_values[MODE_CR];
 			break;
 	}
-	if (current > 10000) {
-		current = 10000;
-	}
+	if (current > 10000) current = 10000;
+	if (current < 130) current = 130; //load can't go lower then 130mA even with 0 duty cycle
 	set_current = current;
-	current *= 2119;
-	current /= 1000;
-	pwm = current + 60;
+	//current *= 2119;
+	//current /= 1000;
+	//pwm = current + 60;
 	//pwm = I_PWM_FACTOR * current + I_PWM_OFFSET;
+	pwm = (1.300110537 * current) - 164.8762037; // Output current is linear function of PWM. Regression gets from real measuring.
 	TIM1->CCR1H = pwm >> 8;
 	TIM1->CCR1L = (uint8_t) pwm;
 	// CC
@@ -774,7 +775,7 @@ void main(void) {
 	setBrightness(2, DP_BOT);
 	setBrightness(2, DP_TOP);
 #ifndef STM8S003
-	showText("TEST", DP_TOP);
+	showText("    ", DP_TOP);
 	//testFan();
 #endif
 	printf("LOAD READY\n");
