@@ -378,7 +378,7 @@ void calcPWM(void) {
 			current /= voltage;
 			break;
 		case MODE_CR: // I = U / R
-			current = ((uint32_t) voltage * 1000) / set_values[MODE_CR]; //R in 0,01 Ohm
+			current = ((uint32_t) voltage * 10000) / set_values[MODE_CR]; //R in 0,001 Ohm
 			break;
 	}
 	if (current > 10000) current = 10000;
