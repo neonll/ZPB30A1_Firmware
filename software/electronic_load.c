@@ -378,19 +378,14 @@ void calcPWM(void) {
 			current /= voltage;
 			break;
 		case MODE_CR: // I = U / R
-			current = voltage;
-			current *= 1060; // Resistance mode needs a slightly higher value
-			current /= set_values[MODE_CR];
+			current = ((uint32_t) voltage * 1000) / set_values[MODE_CR]; //R in 0,01 Ohm
 			break;
 	}
 	if (current > 10000) current = 10000;
 	if (current < 130) current = 130; //load can't go lower then 130mA even with 0 duty cycle
 	set_current = current;
-	//current *= 2119;
-	//current /= 1000;
-	//pwm = current + 60;
 	//pwm = I_PWM_FACTOR * current + I_PWM_OFFSET;
-	pwm = (1.300110537 * current) - 164.8762037; // Output current is linear function of PWM. Regression gets from real measuring.
+	pwm = 2.275235373 * current - 287.0860829; // Output current is linear function of PWM. Regression gained from real measuring.
 	TIM1->CCR1H = pwm >> 8;
 	TIM1->CCR1L = (uint8_t) pwm;
 	// CC
