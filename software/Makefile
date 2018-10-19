@@ -6,12 +6,14 @@ PROCESSOR=STM8S005K6
 STLINK_VERSION=2
 
 MAIN=electronic_load.c
-SRC=tm1650.c
+SRC=tm1650.c uart.c utils.c
 BUILDDIR=build
 
-RELS=$(patsubst %.c,$(BUILDDIR)/%.rel, $(MAIN) $(SRC))
+SRC:=$(MAIN) $(SRC)
+REL=$(patsubst %.c,$(BUILDDIR)/%.rel, $(SRC))
 IHX=$(MAIN:%.c=$(BUILDDIR)/%.ihx)
 HEX=$(IHX:.ihx=.hex)
+DEP=$(REL:%.rel=%.d)
 
 .PHONY: all bin mkdir clean flash unlock
 
@@ -33,17 +35,19 @@ PROGRAMMER=stlinkv$(STLINK_VERSION)
 flash: flash_unix
 unlock: unlock_unix
 endif
+CFLAGS+=$(INCLUDES) -D $(DEFINES)
 
 mkdir:
 	@mkdir -p $(BUILDDIR)
 
 bin: mkdir $(IHX)
 
-$(IHX): $(RELS)
-	$(CC) $(CFLAGS) $(RELS) -o $@
+$(IHX): $(REL)
+	$(CC) $(CFLAGS) $^ -o $@
 
+#-MMD = automatically create dependency files
 $(BUILDDIR)/%.rel: %.c
-	$(CC) -c $(CFLAGS) $(INCLUDES) -D $(DEFINES) $< -o $@
+	$(CC) -c $(CFLAGS) -MMD $< -o $@
 
 $(HEX): $(IHX)
 	packihx $< > $@
@@ -65,3 +69,5 @@ unlock_windows:
 
 unlock_linux:
 	$(STM8FLASH) -c $(PROGRAMMER) -p $(PROCESSOR) -u # Works in stm8flash versions after git commit f3f547b4
+
+-include $(DEP)
