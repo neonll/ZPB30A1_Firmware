@@ -1,40 +1,67 @@
 CC=sdcc
-CFLAGS=-mstm8
+STM8FLASH=stm8flash
+CFLAGS=-mstm8 --std-c11 --opt-code-size
 DEFINES=STM8S005
 PROCESSOR=STM8S005K6
-SOURCE=electronic_load.c
-OUTPUT_DIR=build/
-OUTPUT_FW=firmware/
-OUTPUT_FILE=electronic_load
+STLINK_VERSION=2
+
+MAIN=electronic_load.c
+SRC=
+BUILDDIR=build
+
+RELS=$(patsubst %.c,$(BUILDDIR)/%.rel, $(MAIN) $(SRC))
+IHX=$(MAIN:%.c=$(BUILDDIR)/%.ihx)
+HEX=$(IHX:.ihx=.hex)
+
+.PHONY: all bin mkdir clean flash unlock
+
+all: bin
 
 # SDCC includes working wrong on Windows with "/" slahes
 ifeq ($(OS),Windows_NT)
 INCLUDES=-I.\\inc
+ifeq ($(STLINK_VERSION),2)
+PROGRAMMER=ST-LINK-V2
+else
+PROGRAMMER=ST-LINK
+endif
+flash: flash_windows
+unlock: unlock_windows
 else
 INCLUDES=-I./inc
+PROGRAMMER=stlinkv$(STLINK_VERSION)
+flash: flash_unix
+unlock: unlock_unix
 endif
 
-all:	compile flash
+mkdir:
+	@mkdir -p $(BUILDDIR)
 
-compile:
-	mkdir -p $(OUTPUT_DIR)
-	mkdir -p $(OUTPUT_FW)
-	$(CC) $(CFLAGS) $(INCLUDES) -D $(DEFINES) -o $(OUTPUT_DIR) $(SOURCE)
-	packihx $(OUTPUT_DIR)$(OUTPUT_FILE).ihx > $(OUTPUT_FW)$(OUTPUT_FILE).hex
+bin: mkdir $(IHX)
+
+$(IHX): $(RELS)
+	$(CC) $(CFLAGS) $(RELS) -o $@
+
+$(BUILDDIR)/%.rel: %.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) -D $(DEFINES) $< -o $@
+
+$(HEX): $(IHX)
+	packihx $< > $@
 
 clean:
-	rm $(OUTPUT_DIR)/*
+	rm -rf $(BUILDDIR)
 
-flash_windows:
-	stvp_cmdline -BoardName=ST-LINK -Device=$(PROCESSOR) -Port=USB -ProgMode=SWIM \
+flash_windows: $(HEX)
+	stvp_cmdline -BoardName=$(PROGRAMMER) -Device=$(PROCESSOR) -Port=USB -ProgMode=SWIM \
 	-verbose -no_loop -no_log \
 	-FileProg=$(OUTPUT_FW)$(OUTPUT_FILE).hex
 
-flash_unix:
-	stm8flash -c stlinkv2 -p $(PROCESSOR) -w $(OUTPUT_FW)$(OUTPUT_FILE).hex
+flash_unix: $(IHX)
+	$(STM8FLASH) -c $(PROGRAMMER) -p $(PROCESSOR) -w $(OUTPUT_FW)$(OUTPUT_FILE).hex
 
-ifeq ($(OS),Windows_NT)
-flash:	flash_windows
-else
-flash:	flash_unix
-endif
+unlock_windows:
+	@echo "Unlocking is currently unsupported on windows"
+	false
+
+unlock_linux:
+	$(STM8FLASH) -c $(PROGRAMMER) -p $(PROCESSOR) -u # Works in stm8flash versions after git commit f3f547b4
