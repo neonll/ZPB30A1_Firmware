@@ -1,17 +1,9 @@
-#ifndef TM1650_H
-#define TM1650_H
+#include "tm1650.h"
+#include "stm8s.h"
 
+#define PIN_I2C_CLK (1<<5)
 #define I2C_DELAY 0
 
-#define CHAR_OFFSET 54
-#define LED_V       0x01
-#define LED_AH      0x02
-#define LED_WH      0x04
-#define LED_A       0x08
-#define LED_RUN     0x10
-#define LED_HIGH    0x20
-#define LED_LOW     0x40
- 
 uint8_t digits[] = {
 	0x68,
 	0x6A,
@@ -60,11 +52,8 @@ uint8_t chars[] = {
 	0x40, // -
 };
 
-void i2c_write(uint8_t data, uint8_t pin);
-void disp_write(uint8_t addr, uint8_t data, uint8_t pin);
-void setBrightness(uint8_t brightness, uint8_t pin);
-
-void i2c_write(uint8_t data, uint8_t pin) {
+void i2c_write(uint8_t data, uint8_t pin)
+{
 	uint8_t i;
 	GPIOC->DDR |= pin;
 	for (i = 7; i < 255; i--) {
@@ -74,33 +63,33 @@ void i2c_write(uint8_t data, uint8_t pin) {
 			GPIOC->ODR &= ~pin;
 		}
 		// Clock H/L
-		GPIOC->ODR |= GPIO_PIN_5;
-		GPIOC->ODR &= ~GPIO_PIN_5;
+		GPIOC->ODR |= PIN_I2C_CLK;
+		GPIOC->ODR &= ~PIN_I2C_CLK;
 	}
 	// We don't need the ACK, so just do a single clock H/L without reading
-	GPIOC->ODR |= GPIO_PIN_5;
-	GPIOC->ODR &= ~GPIO_PIN_5;
+	GPIOC->ODR |= PIN_I2C_CLK;
+	GPIOC->ODR &= ~PIN_I2C_CLK;
 }
 
-void disp_write(uint8_t addr, uint8_t data, uint8_t pin) {
+void disp_write(uint8_t addr, uint8_t data, uint8_t pin)
+{
 	// Start sequence
 	GPIOC->ODR |= pin;         // SDA HIGH
-	GPIOC->ODR |= GPIO_PIN_5;  // SCL HIGH
+	GPIOC->ODR |= PIN_I2C_CLK;  // SCL HIGH
 	GPIOC->ODR &= ~pin;        // SDA LOW
-	GPIOC->ODR &= ~GPIO_PIN_5; // SCL LOW
+	GPIOC->ODR &= ~PIN_I2C_CLK; // SCL LOW
 
 	i2c_write(addr, pin);
 	i2c_write(data, pin);
 
 	// Stop sequence
 	GPIOC->ODR &= ~pin;        // SDA LOW
-	GPIOC->ODR |= GPIO_PIN_5;  // SCL HIGH
+	GPIOC->ODR |= PIN_I2C_CLK;  // SCL HIGH
 	GPIOC->ODR |= pin;         // SDA HIGH
 }
 
-void setBrightness(uint8_t brightness, uint8_t pin) {
+void setBrightness(uint8_t brightness, uint8_t pin)
+{
 	if (!brightness) disp_write(0x48, 0x00, pin); // OFF
 	else disp_write(0x48, ((brightness & 7) << 4) | 0x01, pin); // 8 brightness levels
 }
-
-#endif

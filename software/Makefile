@@ -6,7 +6,7 @@ PROCESSOR=STM8S005K6
 STLINK_VERSION=2
 
 MAIN=electronic_load.c
-SRC=
+SRC=tm1650.c
 BUILDDIR=build
 
 RELS=$(patsubst %.c,$(BUILDDIR)/%.rel, $(MAIN) $(SRC))
