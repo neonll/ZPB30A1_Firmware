@@ -6,7 +6,7 @@ PROCESSOR=STM8S005K6
 STLINK_VERSION=2
 
 MAIN=electronic_load.c
-SRC=tm1650.c uart.c utils.c
+SRC=tm1650.c uart.c utils.c fan.c ui.c eeprom.c timer.c
 BUILDDIR=build
 
 SRC:=$(MAIN) $(SRC)
@@ -57,11 +57,10 @@ clean:
 
 flash_windows: $(HEX)
 	stvp_cmdline -BoardName=$(PROGRAMMER) -Device=$(PROCESSOR) -Port=USB -ProgMode=SWIM \
-	-verbose -no_loop -no_log \
-	-FileProg=$(OUTPUT_FW)$(OUTPUT_FILE).hex
+	-verbose -no_loop -no_log -FileProg=$<
 
 flash_unix: $(IHX)
-	$(STM8FLASH) -c $(PROGRAMMER) -p $(PROCESSOR) -w $(OUTPUT_FW)$(OUTPUT_FILE).hex
+	$(STM8FLASH) -c $(PROGRAMMER) -p $(PROCESSOR) -w $<
 
 unlock_windows:
 	@echo "Unlocking is currently unsupported on windows"
@@ -69,5 +68,8 @@ unlock_windows:
 
 unlock_linux:
 	$(STM8FLASH) -c $(PROGRAMMER) -p $(PROCESSOR) -u # Works in stm8flash versions after git commit f3f547b4
+
+clear_eeprom_linux: empty_eeprom
+	$(STM8FLASH) -c $(PROGRAMMER) -p $(PROCESSOR) -s eeprom -w $<
 
 -include $(DEP)

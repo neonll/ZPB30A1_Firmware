@@ -224,7 +224,7 @@
 #define     __O     volatile         /*!< defines 'write only' permissions    */
 #define     __IO    volatile         /*!< defines 'read / write' permissions  */
 
-typedef enum {FALSE = 0, TRUE = !FALSE} bool;
+enum {FALSE = 0, TRUE = !FALSE};
 
 typedef enum {RESET = 0, SET = !RESET} FlagStatus, ITStatus, BitStatus, BitAction;
 

@@ -55,37 +55,37 @@ uint8_t chars[] = {
 void i2c_write(uint8_t data, uint8_t pin)
 {
 	uint8_t i;
-	GPIOC->DDR |= pin;
+	GPIO_DISPLAY->DDR |= pin;
 	for (i = 7; i < 255; i--) {
 		if (data & (1 << i)) {
-			GPIOC->ODR |= pin;
+			GPIO_DISPLAY->ODR |= pin;
 		} else {
-			GPIOC->ODR &= ~pin;
+			GPIO_DISPLAY->ODR &= ~pin;
 		}
 		// Clock H/L
-		GPIOC->ODR |= PIN_I2C_CLK;
-		GPIOC->ODR &= ~PIN_I2C_CLK;
+		GPIO_DISPLAY->ODR |= PIN_I2C_CLK;
+		GPIO_DISPLAY->ODR &= ~PIN_I2C_CLK;
 	}
 	// We don't need the ACK, so just do a single clock H/L without reading
-	GPIOC->ODR |= PIN_I2C_CLK;
-	GPIOC->ODR &= ~PIN_I2C_CLK;
+	GPIO_DISPLAY->ODR |= PIN_I2C_CLK;
+	GPIO_DISPLAY->ODR &= ~PIN_I2C_CLK;
 }
 
 void disp_write(uint8_t addr, uint8_t data, uint8_t pin)
 {
 	// Start sequence
-	GPIOC->ODR |= pin;         // SDA HIGH
-	GPIOC->ODR |= PIN_I2C_CLK;  // SCL HIGH
-	GPIOC->ODR &= ~pin;        // SDA LOW
-	GPIOC->ODR &= ~PIN_I2C_CLK; // SCL LOW
+	GPIO_DISPLAY->ODR |= pin;         // SDA HIGH
+	GPIO_DISPLAY->ODR |= PIN_I2C_CLK;  // SCL HIGH
+	GPIO_DISPLAY->ODR &= ~pin;        // SDA LOW
+	GPIO_DISPLAY->ODR &= ~PIN_I2C_CLK; // SCL LOW
 
 	i2c_write(addr, pin);
 	i2c_write(data, pin);
 
 	// Stop sequence
-	GPIOC->ODR &= ~pin;        // SDA LOW
-	GPIOC->ODR |= PIN_I2C_CLK;  // SCL HIGH
-	GPIOC->ODR |= pin;         // SDA HIGH
+	GPIO_DISPLAY->ODR &= ~pin;        // SDA LOW
+	GPIO_DISPLAY->ODR |= PIN_I2C_CLK;  // SCL HIGH
+	GPIO_DISPLAY->ODR |= pin;         // SDA HIGH
 }
 
 void setBrightness(uint8_t brightness, uint8_t pin)

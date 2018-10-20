@@ -15,6 +15,8 @@ extern uint8_t chars[];
 #define LED_HIGH    0x20
 #define LED_LOW     0x40
 
+#define GPIO_DISPLAY GPIOC
+
 void disp_write(uint8_t addr, uint8_t data, uint8_t pin);
 void setBrightness(uint8_t brightness, uint8_t pin);
 
