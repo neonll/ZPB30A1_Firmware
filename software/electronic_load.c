@@ -360,13 +360,15 @@ void main(void) {
 	delay(300000);
 	setBrightness(2, DP_BOT);
 	setBrightness(2, DP_TOP);
-	showText("    ", DP_TOP);
+	showText("BOOT", DP_TOP);
 	printf("LOAD READY\n");
 	__asm__ ("rim");
 
-	BEEP->CSR |= BEEP_CSR_BEEPEN; // Enable buzzer
-	delay10ms(20);
-	BEEP->CSR &= ~BEEP_CSR_BEEPEN;
+	if(beeper_on){
+		BEEP->CSR |= BEEP_CSR_BEEPEN; // Enable buzzer
+		delay10ms(20);
+		BEEP->CSR &= ~BEEP_CSR_BEEPEN;
+	}
 
 	while (1) {
 		uint32_t start_time;
@@ -421,6 +423,8 @@ void main(void) {
 		}
 		running = 0;
 		GPIOE->ODR |= GPIO_PIN_5;
+		TIM1->CCR1H = 0; // turn off PWM, to avoid current peak on next start
+		TIM1->CCR1L = 0;
 		encoder_pressed = 0;
 		if (error != ERROR_NONE) {
 			showText("ERR", DP_BOT);
@@ -429,7 +433,14 @@ void main(void) {
 				tempFan();
 				//showNumber(temperature, 1, DP_TOP);
 				disp_write(digits[3], LED_RUN * ((tenmillis / 50) & 1), DP_BOT);
+				if(((tenmillis / 50) & 1) && !(BEEP->CSR & BEEP_CSR_BEEPEN) && beeper_on){ // Toggle beeper
+					BEEP->CSR |= BEEP_CSR_BEEPEN;
+				}
+				else if(!((tenmillis / 50) & 1) && (BEEP->CSR & BEEP_CSR_BEEPEN && beeper_on)){
+					BEEP->CSR &= ~BEEP_CSR_BEEPEN;
+				}
 			}
+			BEEP->CSR &= ~BEEP_CSR_BEEPEN; // Turn off beeper if you jump from err while it's ON
 			error = ERROR_NONE;
 			encoder_pressed = 0;
 		}

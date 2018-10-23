@@ -44,6 +44,7 @@ void GPIOC_Handler() __interrupt(5) {
 	input_values &= ~GPIOC->IDR; // store changes (H->L) for buttons
 	encoder_pressed |= (input_values >> 3) & 1; // Set flag, that the button was pressed
 	run_pressed     |= (input_values >> 4) & 1; // Set flag, that the button was pressed
+	if((input_values >> 2) & 1 == 1) error = ERROR_OLP; // OverLoad pro
 	input_values = GPIOC->IDR;
 }
 
