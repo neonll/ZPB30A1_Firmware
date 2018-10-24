@@ -8,6 +8,7 @@
 #include "eeprom.h"
 #include "timer.h"
 #include "todo.h"
+#include "inc/stm8s_clk.h"
 
 #define OVERSAMPLING 2
 
@@ -80,15 +81,20 @@ battery_voltage_t voltages[] = {
 };
 
 
-void setup(void) {
+void clock_init()
+{
 	CLK->CKDIVR = CLK_PRESCALER_HSIDIV1;
-	CLK->ICKR |= CLK_ICKR_LSIEN;
-	CLK->ECKR |= CLK_ECKR_HSEEN;
-	while ((CLK->ECKR & CLK_FLAG_HSERDY) == 0);
-	CLK->SWR = 0xb4;
+	CLK->ICKR |= CLK_ICKR_LSIEN; // Low speed RC for beeper
+	CLK->ECKR |= CLK_ECKR_HSEEN; // Crystal oscillator
+	while ((CLK->ECKR & CLK_FLAG_HSERDY) == 0); // wait for crystal startup
+	CLK->SWR = CLK_SOURCE_HSE;
 	//CLK->SWCR = CLK_SWCR_SWEN;*/
 	CLK->CKDIVR = 0;
+}
 
+void setup(void)
+{
+	clock_init();
 	GPIOB->CR1 |= GPIO_PIN_4; // ENC A PullUp
 	GPIOB->CR2 |= GPIO_PIN_4; // ENC A Interrupt
 	GPIOB->CR1 |= GPIO_PIN_5; // ENC B PullUp
