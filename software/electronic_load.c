@@ -21,15 +21,6 @@ typedef struct {
 	char     name[5];
 } battery_voltage_t;
 
-typedef enum {
-	ERROR_NONE,
-	ERROR_UVP,  // Undervoltage protection
-	ERROR_OVP,  // Overvoltage protection
-	ERROR_OLP,  // Overload protection/warning
-	ERROR_OTP,  // Over temperature protection
-	ERROR_PWR,  // Insufficient power source
-} error_t;
-
 bool              logging         = 0;
 volatile bool     calc_fan        = 0;
 volatile bool     redraw          = 0;
@@ -92,45 +83,55 @@ void clock_init()
 	CLK->CKDIVR = 0;
 }
 
+void gpio_init()
+{
+	// port B
+	#define PINB_ENC_A (1u<<5)
+	#define PINB_ENC_B (1u<<4)
+	GPIOB->CR1 = PINB_ENC_A | PINB_ENC_B; // Pullup
+	GPIOB->CR2 = PINB_ENC_A | PINB_ENC_B; // Irq
+
+	//port C
+	#define PINC_I_SET (1u<<1)
+	#define PINC_OL_DETECT (1u<<2)
+	#define PINC_ENC_P (1u<<3)
+	#define PINC_RUN_P (1u<<4)
+	#define PINC_SCL (1u<<5)
+	#define PINC_SDA1 (1u<<6)
+	#define PINC_SDA2 (1u<<7)
+	GPIOC->DDR = PINC_I_SET | PINC_SCL | PINC_SDA1 | PINC_SDA2;
+	//TODO: In the original version SDA is configured as push-pull
+	// but that doesn't make sense
+	GPIOC->CR1 = PINC_I_SET | PINC_SCL | // push pull
+				 PINC_OL_DETECT | PINC_ENC_P | PINC_RUN_P; // pullup
+	GPIOC->CR2 = PINC_OL_DETECT | PINC_ENC_P | PINC_RUN_P |  // irq
+				 PINC_SCL | PINC_SDA1 | PINC_SDA2; // 10 MHz
+
+	// port D
+	#define PIND_FAN (1u<<0)
+	#define PIND_SWIM (1u<<1)
+	#define PIND_BUS_F (1u<<2)
+	#define PIND_V_OK (1u<<3)
+	#define PIND_BEEPER (1u<<4)
+	#define PIND_TX (1u<<5)
+	#define PIND_RX (1u<<6)
+	#define PIND_TLI (1u<<7)
+	GPIOD->DDR = PIND_FAN | PIND_BUS_F | PIND_BEEPER | PIND_TX;
+	GPIOD->CR1 = PIND_FAN | PIND_BUS_F | PIND_BEEPER | PIND_TX | // push pull
+				 PIND_V_OK | PIND_TLI; // pullup
+	GPIOD->CR2 = PIND_V_OK | PIND_TLI; // irq
+
+	// port E
+	#define PINE_ENABLE (1<<5)
+	GPIOE->ODR = PINE_ENABLE; // load off
+	GPIOE->DDR = PINE_ENABLE; // pullup
+
+}
+
 void setup(void)
 {
 	clock_init();
-	GPIOB->CR1 |= GPIO_PIN_4; // ENC A PullUp
-	GPIOB->CR2 |= GPIO_PIN_4; // ENC A Interrupt
-	GPIOB->CR1 |= GPIO_PIN_5; // ENC B PullUp
-	GPIOB->CR2 |= GPIO_PIN_5; // ENC B Interrupt
-
-	GPIOC->DDR |= GPIO_PIN_1; // SET I Output
-	GPIOC->CR1 |= GPIO_PIN_1; // SET I PUSH PULL
-	GPIOC->CR1 |= GPIO_PIN_2; // OL PullUp
-	GPIOC->CR2 |= GPIO_PIN_2; // OL Interrupt
-	GPIOC->CR1 |= GPIO_PIN_3; // ENC PullUp
-	GPIOC->CR2 |= GPIO_PIN_3; // ENC Interrupt
-	GPIOC->CR1 |= GPIO_PIN_4; // RUN PullUp
-	GPIOC->CR2 |= GPIO_PIN_4; // RUN Interrupt
-	GPIOC->DDR |= GPIO_PIN_5; // SCL Output
-	GPIOC->CR1 |= GPIO_PIN_5; // SCL PUSH PULL
-	GPIOC->CR2 |= GPIO_PIN_5; // SCL 10 MHz
-	GPIOC->DDR |= GPIO_PIN_6; // SDA1 Output
-	GPIOC->CR1 |= GPIO_PIN_6; // SDA1 PUSH PULL
-	GPIOC->CR2 |= GPIO_PIN_6; // SDA1 10 MHz
-	GPIOC->DDR |= GPIO_PIN_7; // SDA2 Output
-	GPIOC->CR1 |= GPIO_PIN_7; // SDA2 PUSH PULL
-	GPIOC->CR2 |= GPIO_PIN_7; // SDA2 10 MHz
-
-	GPIOD->DDR |= GPIO_PIN_0; // FAN Output
-	GPIOD->CR1 |= GPIO_PIN_0; // FAN PUSH PULL
-	GPIOD->DDR |= GPIO_PIN_2; // F Output
-	GPIOD->CR1 |= GPIO_PIN_2; // F PUSH PULL
-	GPIOD->CR1 |= GPIO_PIN_3; // VOLTAGE OK PullUp
-	GPIOD->CR2 |= GPIO_PIN_3; // VOLTAGE OK Interrupt
-	GPIOD->DDR |= GPIO_PIN_4; // Buzzer Output
-	GPIOD->CR1 |= GPIO_PIN_4; // Buzzer PUSH PULL
-	GPIOD->CR1 |= GPIO_PIN_7; // L PullUp
-	GPIOD->CR2 |= GPIO_PIN_7; // L Interrupt
-
-	GPIOE->DDR |= GPIO_PIN_5; // ENABLE OUTPUT OD
-	GPIOE->ODR |= GPIO_PIN_5; // LOAD OFF
+	gpio_init();
 
 	ADC1->CR2 |= ADC1_ALIGN_RIGHT;
 	ADC1->CSR |= ADC1_CHANNEL_1;
@@ -143,7 +144,6 @@ void setup(void)
 	EXTI->CR1   |= EXTI_SENSITIVITY_RISE_FALL << 4; // GPIOC
 	EXTI->CR1   |= EXTI_SENSITIVITY_RISE_FALL << 6; // GPIOD
 
-#ifndef STM8S003
 	// FAN
 	//TIM3->ARRH   = 0x10;
 	//TIM3->ARRL   = 0x00;
@@ -153,7 +153,6 @@ void setup(void)
 	TIM3->CR1   |= TIM3_CR1_CEN | TIM3_CR1_ARPE;
 	TIM3->CCR2H  = 0;
 	TIM3->CCR2L  = 0;
-#endif
 
 	// I-SET
 	// 28000 gives a frequency of about 571 Hz on 16 MHz
@@ -283,35 +282,19 @@ void calcPWM(void) {
 
 void setFan() {
 	if (temperature > 850) { // Over temperature protection
-#ifdef STM8S003
-		GPIOD->ODR |= GPIO_PIN_0;
-#else
 		TIM3->CCR2H  = 0xFF;
 		TIM3->CCR2L  = 0xFF;
-#endif
 		error = ERROR_OTP;
 	}
 	if (temperature > 400) {
-#ifdef STM8S003
-		GPIOD->ODR |= GPIO_PIN_0;
-#else
 		TIM3->CCR2H  = (temperature * 54) >> 8;
 		TIM3->CCR2L  = (uint8_t)(temperature * 54);
-#endif
 	} else if (~GPIOE->ODR & GPIO_PIN_5) { // Set minimum pwm of 1/3 if switched on
-#ifdef STM8S003
-		GPIOD->ODR |= GPIO_PIN_0;
-#else
 		TIM3->CCR2H  = 0x55;
 		TIM3->CCR2L  = 0x55;
-#endif
 	} else {
-#ifdef STM8S003
-		GPIOD->ODR &= ~GPIO_PIN_0;
-#else
 		TIM3->CCR2H  = 0;
 		TIM3->CCR2L  = 0;
-#endif
 	}
 }
 

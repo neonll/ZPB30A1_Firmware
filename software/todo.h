@@ -17,4 +17,14 @@ extern uint16_t cutoff_voltage;
 extern bool beeper_on;
 void tempFan();
 
+typedef enum {
+	ERROR_NONE,
+	ERROR_UVP,  // Undervoltage protection
+	ERROR_OVP,  // Overvoltage protection
+	ERROR_OLP,  // Overload protection/warning
+	ERROR_OTP,  // Over temperature protection
+	ERROR_PWR,  // Insufficient power source
+} error_t;
+extern error_t error;
+
 #endif
