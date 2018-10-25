@@ -320,20 +320,6 @@ void tempFan() {
 	}
 }
 
-int putchar(int c) {
-#ifdef STM8S003
-	UART1->DR = c;
-	while (!(UART1->SR & (uint8_t)UART1_FLAG_TXE));
-#else
-	UART2->DR = (char) c;
-	while (!(UART2->SR & (uint8_t)UART2_FLAG_TXE));
-#endif
-return c;
-}
-
-int getchar(void) {
-	return UART2->DR;
-}
 
 void main(void) {
 	setup();
@@ -342,7 +328,7 @@ void main(void) {
 	set_values[MODE_CW] = read16(MEM_CW);
 	set_values[MODE_CR] = read16(MEM_CR);
 	set_values[MODE_CV] = read16(MEM_CV);
-	beeper_on = read8(MEM_BEEP); //Move to ui_init()
+	beeper_on = read8(MEM_BEEP);
 	cutoff_active = read8(MEM_CUTO);
 	cutoff_voltage = read16(MEM_CUTV);
 
@@ -599,23 +585,10 @@ void TIM2_UPD_OVF_Handler() __interrupt(13) {
 	}
 }
 
-void UART2_RX_IRQHandler() __interrupt(21){
-	char tmp = UART2->DR;
-	if(tmp == 'S'){	//start command from LogView
-		printf("$N$;Electronic Load\r\n");
-		printf("$C$;Current [A,I];Voltage [V,U];Ampere hour[Ah];Watt hour[Wh];Temperature[°C,T]\r\n");
-		printf("$F$;0.001;0.01;0.000000277778;0.000000277778;0,1\r\n");	//convert units for logview
-		logging = 1;
-	}
-	else if(tmp == 'E') {
-		printf("End of logging");
-		logging = 0;
-	}
-}
-
 
 /* If you have multiple source files in your project, interrupt service routines
  can be present in any of them, but a prototype of the isr MUST be present or
  included in the file that contains the function main. */
- void GPIOB_Handler() __interrupt(4);
- void GPIOC_Handler() __interrupt(5);
+void GPIOB_Handler() __interrupt(4);
+void GPIOC_Handler() __interrupt(5);
+void UART2_RX_IRQHandler() __interrupt(21);
