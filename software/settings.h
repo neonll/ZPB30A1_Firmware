@@ -6,6 +6,7 @@ typedef enum {
 	MODE_CW,
 	MODE_CR,
 	MODE_CV,
+	NUM_MODES
 } sink_mode_t;
 extern sink_mode_t set_mode;
 extern uint16_t set_values[4]; // CC/CW/CR/CV
@@ -14,4 +15,5 @@ extern bool logging;
 extern bool cutoff_active;
 extern uint16_t cutoff_voltage;
 void settings_init();
+void settings_update();
 #endif

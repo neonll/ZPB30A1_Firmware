@@ -162,7 +162,7 @@ void selectMode(void)
 			showText(mode_text[set_mode], DP_BOT);
 		}
 		if (encoder_pressed) {
-			write8(MEM_MODE, set_mode);
+			settings_update();
 			return;
 		}
 	}
@@ -239,7 +239,7 @@ void selectValue(void)
 				option_changed = 1;
 				disp_write(digits[3], LED_LOW, DP_BOT);
 			} else {
-				write16((set_mode + 1) << 4, set_values[set_mode]);
+				settings_update();
 				return;
 			}
 		}
@@ -280,7 +280,7 @@ void selectCutoff(void) {
 				option_changed = 1;
 				disp_write(digits[3], LED_LOW, DP_BOT);
 			} else {
-				write16(MEM_CUTV, cutoff_voltage);
+				settings_update();
 				return;
 			}
 		}
@@ -349,20 +349,18 @@ void showMenu()
 				case 1:
 					showText(mode_units[set_mode], DP_TOP);
 					set_values[set_mode] = selectUInt16(set_values[set_mode], max_values[set_mode]);
-					write16((set_mode + 1) << 4, set_values[set_mode]);
 					break;
 				case 2:
 					cutoff_active = selectBool(cutoff_active);
-					write8(MEM_CUTO, cutoff_active);
 					break;
 				case 3:
 					selectCutoff();
 					break;
 				case 4:
 					beeper_enabled = selectBool(beeper_enabled);
-					write8(MEM_BEEP, beeper_enabled);
 					break;
 			}
+			settings_update();
 			setBrightness(2, DP_BOT);
 			disp_write(digits[3], 0, DP_BOT);
 			encoder_pressed = 0;
