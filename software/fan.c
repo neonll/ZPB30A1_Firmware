@@ -6,7 +6,14 @@ uint16_t temperature = 0;
 
 void fan_init()
 {
-
+	//TIM3->ARRH   = 0x10;
+	//TIM3->ARRL   = 0x00;
+	TIM3->CCMR2  = TIM3_OCMODE_PWM1 | TIM3_CCMR_OCxPE;
+	TIM3->CCER1  = TIM3_CCER1_CC2E;
+	TIM3->PSCR   = TIM3_PRESCALER_1; // Prescaler of 1 gives 16 MHz / 2^16 = 244 Hz
+	TIM3->CR1   |= TIM3_CR1_CEN | TIM3_CR1_ARPE;
+	TIM3->CCR2H  = 0;
+	TIM3->CCR2L  = 0;
 }
 
 

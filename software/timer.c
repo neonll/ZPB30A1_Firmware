@@ -3,18 +3,31 @@
 #include "stm8s_tim2.h"
 #include "ui.h"
 #include "fan.h"
+#include "config.h"
 
-volatile uint32_t tenmillis          = 0;	// 10 milliseconds
+volatile uint32_t systick = 0;
+
+void systick_init()
+{
+	#define SYSTICK_PRESCALER 8
+	#define SYSTICK_RELOAD (F_CPU / F_SYSTICK / SYSTICK_PRESCALER)
+	TIM2->PSCR   = TIM2_PRESCALER_8;
+	TIM2->ARRH   = SYSTICK_RELOAD >> 8;
+	TIM2->ARRL   = SYSTICK_RELOAD & 0xff;
+	TIM2->IER    = TIM2_IER_UIE;
+	TIM2->CR1   |= TIM2_CR1_CEN;
+}
+
 //TODO: Move calculations to main loop.
 void TIM2_UPD_OVF_Handler() __interrupt(13)
 {
 	TIM2->SR1 &= ~TIM2_SR1_UIF;
 
-	tenmillis++;
-	if (tenmillis % 50 == 0) {
+	systick++;
+	if (systick % (uint32_t)(F_SYSTICK/F_DISPLAY_REDRAW) == 0) {
 		redraw = 1;
 	}
-	if (tenmillis % 100 == 0 && running) {
+	if (systick % (uint32_t)(F_SYSTICK/F_POWER_CALC) == 0 && running) {
 		// watts can be 60000 max.
 		uint32_t mWatt = set_current;
 		mWatt *= voltage;
@@ -22,7 +35,7 @@ void TIM2_UPD_OVF_Handler() __interrupt(13)
 		mWatt_seconds += mWatt;
 		mAmpere_seconds += set_current;
 	}
-	if (tenmillis % 5000 == 0) {
+	if (systick % (uint32_t)(F_SYSTICK/F_FAN) == 0) {
 		calc_fan = 1;
 	}
 }

@@ -16,8 +16,8 @@
 
 #define OVERSAMPLING 2
 
-#define MINUTE   6000
-#define HOUR   360000
+#define MINUTE   60
+#define HOUR   3600
 
 typedef struct {
 	uint16_t charged_voltage;
@@ -129,16 +129,7 @@ void setup(void)
 	gpio_init();
 	adc_init();
 	uart_init();
-
-	// FAN
-	//TIM3->ARRH   = 0x10;
-	//TIM3->ARRL   = 0x00;
-	TIM3->CCMR2  = TIM3_OCMODE_PWM1 | TIM3_CCMR_OCxPE;
-	TIM3->CCER1  = TIM3_CCER1_CC2E;
-	TIM3->PSCR   = TIM3_PRESCALER_1; // Prescaler of 1 gives 16 MHz / 2^16 = 244 Hz
-	TIM3->CR1   |= TIM3_CR1_CEN | TIM3_CR1_ARPE;
-	TIM3->CCR2H  = 0;
-	TIM3->CCR2L  = 0;
+	systick_init();
 
 	// I-SET
 	// 28000 gives a frequency of about 571 Hz on 16 MHz
@@ -153,13 +144,6 @@ void setup(void)
 	TIM1->CCR1L  = 0;
 	TIM1->CR1   |= TIM1_CR1_CEN | TIM1_CR1_ARPE;
 	TIM1->BKR   |= TIM1_BKR_MOE;
-
-	// 20000 gives an interrupt frequency of 100 Hz -> 10ms
-	TIM2->ARRH   = 0x4E;
-	TIM2->ARRL   = 0x20;
-	TIM2->PSCR   = TIM2_PRESCALER_8;
-	TIM2->IER    = TIM2_IER_UIE;
-	TIM2->CR1   |= TIM2_CR1_CEN;
 
 	// Unlock flash
 	FLASH->DUKR = FLASH_RASS_KEY2;
@@ -297,7 +281,7 @@ void main(void) {
 		GPIOE->ODR &= ~GPIO_PIN_5;
 		running = 1;
 		setFan();
-		start_time = tenmillis;
+		start_time = systick;
 
 		while (!run_pressed && error == ERROR_NONE) {
 			getVoltage();
@@ -311,7 +295,7 @@ void main(void) {
 			}
 			calcPWM();
 			if (redraw) {
-				uint8_t s_var = (tenmillis / 500) % 5;
+				uint8_t s_var = (systick / (uint32_t)(F_SYSTICK / F_UI_AUTODISPLAY)) % 5;
 				uint16_t timer;
 				switch (s_var) {
 					case 0:
@@ -327,10 +311,12 @@ void main(void) {
 						showNumber(temperature, 1, DP_TOP);
 						break;
 					case 4:
-						timer = (tenmillis - start_time) / MINUTE * 100 + ((tenmillis - start_time) / 100) % 60;
+						//Convert to number for display M.SS
+						//TODO: Switch to H.MM for longer times
+						timer = (systick - start_time) / MINUTE / F_SYSTICK * 100 + ((systick - start_time) / F_SYSTICK) % MINUTE;
 						showNumber(timer, 2, DP_TOP);
 				}
-				//printf("%lu; %u; %u; %lu; %lu; %u\n", (tenmillis - start_time), set_current, voltage, mAmpere_seconds, mWatt_seconds, temperature);
+				//printf("%lu; %u; %u; %lu; %lu; %u\n", (systick - start_time), set_current, voltage, mAmpere_seconds, mWatt_seconds, temperature);
 				//showNumber(analogRead(ADC1_CHANNEL_0), 4, DP_TOP);
 				if(logging){
 					printf("$%u;%u;%lu;%lu;%u\r\n", set_current, voltage, mAmpere_seconds, mWatt_seconds, temperature);
@@ -353,11 +339,11 @@ void main(void) {
 			while (!encoder_pressed) {
 				tempFan();
 				//showNumber(temperature, 1, DP_TOP);
-				disp_write(digits[3], LED_RUN * ((tenmillis / 50) & 1), DP_BOT);
-				if(((tenmillis / 50) & 1) && !(BEEP->CSR & BEEP_CSR_BEEPEN) && beeper_on){ // Toggle beeper
+				disp_write(digits[3], LED_RUN * ((systick / 50) & 1), DP_BOT);
+				if(((systick / 50) & 1) && !(BEEP->CSR & BEEP_CSR_BEEPEN) && beeper_on){ // Toggle beeper
 					BEEP->CSR |= BEEP_CSR_BEEPEN;
 				}
-				else if(!((tenmillis / 50) & 1) && (BEEP->CSR & BEEP_CSR_BEEPEN && beeper_on)){
+				else if(!((systick / 50) & 1) && (BEEP->CSR & BEEP_CSR_BEEPEN && beeper_on)){
 					BEEP->CSR &= ~BEEP_CSR_BEEPEN;
 				}
 			}
@@ -371,7 +357,7 @@ void main(void) {
 
 /*
 	while (1) {
-		showNumber((uint16_t)tenmillis, 2, DP_TOP);
+		showNumber((uint16_t)systick, 2, DP_TOP);
 		while ((UART2->SR & (uint8_t)UART2_SR_RXNE)){
 			rcvBuff[countRx++] = (char) getchar();
 		}

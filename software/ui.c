@@ -99,7 +99,8 @@ uint8_t select(char *opts, uint8_t num_opts, uint8_t selected)
 void blinkDisplay(uint8_t disp)
 {
 	uint8_t dptop = disp == DP_TOP;
-	if (brightness[dptop] != ((tenmillis >> 5) & 1)) {
+	//TODO: Cleanup
+	if (brightness[dptop] != ((systick >> 5) & 1)) {
 		brightness[dptop] = !brightness[dptop];
 		setBrightness(1 + brightness[dptop], disp);
 	}
