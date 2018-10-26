@@ -1,9 +1,7 @@
 #ifndef _LOAD_H_
 #define _LOAD_H_
+
 #include "bool.h"
-extern bool cutoff_active;
-extern uint16_t cutoff_voltage;
-void tempFan();
 
 typedef enum {
 	ERROR_NONE,
@@ -19,4 +17,7 @@ extern uint16_t set_current; //mA
 extern volatile uint32_t mAmpere_seconds;	//mAs
 extern volatile uint32_t mWatt_seconds;	//mWs
 extern bool running;
+
+void load_init();
+
 #endif

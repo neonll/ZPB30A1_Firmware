@@ -1,9 +1,9 @@
 #include "timer.h"
 #include "load.h"
-#include "stm8s_tim2.h"
 #include "ui.h"
 #include "fan.h"
 #include "config.h"
+#include "inc/stm8s_tim2.h"
 
 volatile uint32_t systick = 0;
 

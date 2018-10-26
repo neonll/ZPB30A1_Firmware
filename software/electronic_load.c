@@ -9,10 +9,11 @@
 #include "timer.h"
 #include "todo.h"
 #include "settings.h"
-#include "stm8s_clk.h"
+#include "inc/stm8s_clk.h"
 #include "load.h"
 #include "fan.h"
 #include "adc.h"
+#include "beeper.h"
 
 #define OVERSAMPLING 2
 
@@ -96,50 +97,9 @@ void setup(void)
 	adc_init();
 	uart_init();
 	systick_init();
-
-	// I-SET
-	// 28000 gives a frequency of about 571 Hz on 16 MHz
-	TIM1->ARRH   = 0x6D;
-	TIM1->ARRL   = 0x60;
-	TIM1->PSCRH  = 0;
-	TIM1->PSCRL  = 0;
-
-	TIM1->CCMR1  = TIM1_OCMODE_PWM1 | TIM1_CCMR_OCxPE;
-	TIM1->CCER1  = TIM1_CCER1_CC1E;
-	TIM1->CCR1H  = 0;
-	TIM1->CCR1L  = 0;
-	TIM1->CR1   |= TIM1_CR1_CEN | TIM1_CR1_ARPE;
-	TIM1->BKR   |= TIM1_BKR_MOE;
-
-	// Unlock flash
-	FLASH->DUKR = FLASH_RASS_KEY2;
-	FLASH->DUKR = FLASH_RASS_KEY1;
-	while (!(FLASH->IAPSR & FLASH_IAPSR_DUL));
-
-	// Set option bytes because of buzzer, not working yet
-	/*if(OPT->OPT2 != 0x80 || OPT->OPT3 != 0x08){
-		FLASH->CR2 |= FLASH_CR2_OPT; // unlock option bytes for writing
- 		FLASH->NCR2 &= (uint8_t)(~FLASH_NCR2_NOPT);
-		while (!(FLASH->IAPSR & FLASH_IAPSR_DUL));
-
-		OPT->OPT2 = 0x80; // enable LSI clock source
-		OPT->NOPT2 = 0x7f;
-		OPT->OPT3 = 0x08; // set PD4 as alternative buzzer output
-		OPT->NOPT3 = 0xf7;
-		while (!(FLASH->IAPSR & FLASH_IAPSR_EOP)); // wait for write finish
-
-		FLASH->CR2 &= (uint8_t)(~FLASH_CR2_OPT);	// lock back
-  		FLASH->NCR2 |= FLASH_NCR2_NOPT;
-	}*/
-
-	// Setup buzzer
-	// For buzzer working you must set option bytes: AFR7 - port D4 alternate function = BEEP and LSI_EN - LSI clock enable as CPU clock source
-	// You can do this e.g. from graphic STVP
-	BEEP->CSR &= ~BEEP_CSR_BEEPEN; // Disable Buzzer
-    BEEP->CSR &= ~BEEP_CSR_BEEPDIV; // Clear DIV register
-    BEEP->CSR |= BEEP_CALIBRATION_DEFAULT; // Set register with default calibration
- 	BEEP->CSR &= ~BEEP_CSR_BEEPSEL; // Clear SEL register
- 	BEEP->CSR |= BEEP_FREQUENCY_2KHZ; // Set frequency of buzzer to 2kHz
+	load_init();
+	beeper_init();
+	settings_init();
 }
 
 uint16_t analogRead(ADC1_Channel_TypeDef ch) {
@@ -219,15 +179,6 @@ void calcPWM(void) {
 
 void main(void) {
 	setup();
-	set_mode = read8(MEM_MODE);
-	set_values[MODE_CC] = read16(MEM_CC);
-	set_values[MODE_CW] = read16(MEM_CW);
-	set_values[MODE_CR] = read16(MEM_CR);
-	set_values[MODE_CV] = read16(MEM_CV);
-	beeper_on = read8(MEM_BEEP);
-	cutoff_active = read8(MEM_CUTO);
-	cutoff_voltage = read16(MEM_CUTV);
-
 	delay(300000);
 	setBrightness(2, DP_BOT);
 	setBrightness(2, DP_TOP);
@@ -235,11 +186,9 @@ void main(void) {
 	printf("LOAD READY\n");
 	__asm__ ("rim");
 
-	if(beeper_on){
-		BEEP->CSR |= BEEP_CSR_BEEPEN; // Enable buzzer
-		delay10ms(20);
-		BEEP->CSR &= ~BEEP_CSR_BEEPEN;
-	}
+	beeper_on();
+	delay10ms(20);
+	beeper_off();
 
 	while (1) {
 		uint32_t start_time;
@@ -306,14 +255,13 @@ void main(void) {
 				tempFan();
 				//showNumber(temperature, 1, DP_TOP);
 				disp_write(digits[3], LED_RUN * ((systick / 50) & 1), DP_BOT);
-				if(((systick / 50) & 1) && !(BEEP->CSR & BEEP_CSR_BEEPEN) && beeper_on){ // Toggle beeper
-					BEEP->CSR |= BEEP_CSR_BEEPEN;
-				}
-				else if(!((systick / 50) & 1) && (BEEP->CSR & BEEP_CSR_BEEPEN && beeper_on)){
-					BEEP->CSR &= ~BEEP_CSR_BEEPEN;
+				//TODO: Magic numbers
+				if((systick / 25) & 1) {
+					beeper_toggle();
 				}
 			}
-			BEEP->CSR &= ~BEEP_CSR_BEEPEN; // Turn off beeper if you jump from err while it's ON
+			beeper_off();
+			//TODO: Keep fan regulator active in error mode
 			error = ERROR_NONE;
 			encoder_pressed = 0;
 		}

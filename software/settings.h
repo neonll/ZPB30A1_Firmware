@@ -9,7 +9,9 @@ typedef enum {
 } sink_mode_t;
 extern sink_mode_t set_mode;
 extern uint16_t set_values[4]; // CC/CW/CR/CV
-extern bool beeper_on;
+extern bool beeper_enabled;
 extern bool logging;
-void settings_read();
+extern bool cutoff_active;
+extern uint16_t cutoff_voltage;
+void settings_init();
 #endif

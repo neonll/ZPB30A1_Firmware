@@ -3,7 +3,8 @@
 #include "timer.h"
 #include "eeprom.h"
 #include "load.h"
-#include "stm8s_gpio.h"
+#include "fan.h"
+#include "inc/stm8s_gpio.h"
 
 volatile int8_t encoder_val = 0;
 volatile bool encoder_pressed = 0;
@@ -12,12 +13,15 @@ uint8_t brightness[] = {0, 0};
 bool option_changed = 0;
 volatile bool redraw = 0;
 
-char mode_name[][5] = {
+char mode_units[][5] = {
 	"AMPS",
 	"WATT",
 	"OHMS",
 	"VOLT"
 };
+
+char mode_text[][4] = {"CC@","CW@","CR@","CV@"};
+char on_off_text[][4] = {"OFF","ON@"};
 
 uint16_t max_values[4] = {
 	10000, // 10A
@@ -149,14 +153,13 @@ uint16_t change_u16(uint16_t var, uint16_t max, uint16_t inc)
 
 void selectMode(void)
 {
-	char subopts[][4] = {"CC@","CW@","CR@","CV@"};
 	while (1) {
 		blinkDisplay(DP_BOT);
 		set_mode = change_u8(set_mode, 2);		//CV mode not supported yet
 		if (option_changed) {
 			option_changed = 0;
 			encoder_val = 0;
-			showText(subopts[set_mode], DP_BOT);
+			showText(mode_text[set_mode], DP_BOT);
 		}
 		if (encoder_pressed) {
 			write8(MEM_MODE, set_mode);
@@ -167,13 +170,12 @@ void selectMode(void)
 
 bool selectBool(bool val)
 {
-	char subopts[][4] = {"OFF","ON@"};
 	while (1) {
 		blinkDisplay(DP_BOT);
 		if (encoder_val) {
 			val = !val;
 			encoder_val = 0;
-			showText(subopts[val], DP_BOT);
+			showText(on_off_text[val], DP_BOT);
 		}
 		if (encoder_pressed) {
 			return val;
@@ -295,7 +297,7 @@ void showMenu()
 {
 	uint8_t old_opt = 255, opt = 0;
 	char opts[][5] = {"MODE", "VAL@", "SHDN", "CUTO", "BEEP"};
-	char subopts[][4] = {"CC@","CW@","CR@","CV@","OFF","ON@"};
+
 	//char *opts = "MODEVAL@SHDNCUTOBEEP";
 	//select(opts, 5, 0);
 	while (1) {
@@ -319,19 +321,19 @@ void showMenu()
 			showText(opts[opt], DP_TOP);
 			switch (opt) {
 				case 0:
-					showText(subopts[(uint8_t)set_mode], DP_BOT);
+					showText(mode_text[(uint8_t)set_mode], DP_BOT);
 					break;
 				case 1:
 					showNumber(set_values[(uint8_t)set_mode], 3, DP_BOT);
 					break;
 				case 2:
-					showText(subopts[4 + cutoff_active], DP_BOT);
+					showText(on_off_text[cutoff_active], DP_BOT);
 					break;
 				case 3:
 					showNumber(cutoff_voltage, 2, DP_BOT);
 					break;
 				case 4:
-					showText(subopts[4 + beeper_on], DP_BOT);
+					showText(on_off_text[beeper_enabled], DP_BOT);
 					break;
 			}
 			old_opt = opt;
@@ -345,7 +347,7 @@ void showMenu()
 					selectMode();
 					break;
 				case 1:
-					showText(mode_name[set_mode], DP_TOP);
+					showText(mode_units[set_mode], DP_TOP);
 					set_values[set_mode] = selectUInt16(set_values[set_mode], max_values[set_mode]);
 					write16((set_mode + 1) << 4, set_values[set_mode]);
 					break;
@@ -357,8 +359,8 @@ void showMenu()
 					selectCutoff();
 					break;
 				case 4:
-					beeper_on = selectBool(beeper_on);
-					write8(MEM_BEEP, beeper_on);
+					beeper_enabled = selectBool(beeper_enabled);
+					write8(MEM_BEEP, beeper_enabled);
 					break;
 			}
 			setBrightness(2, DP_BOT);
