@@ -19,12 +19,6 @@
 #define MINUTE   60
 #define HOUR   3600
 
-typedef struct {
-	uint16_t charged_voltage;
-	uint16_t cutoff_voltage;
-	char     name[5];
-} battery_voltage_t;
-
 error_t           error           = ERROR_NONE;
 char              error_msg[][5]  = {
 	"UVP@",
@@ -32,34 +26,6 @@ char              error_msg[][5]  = {
 	"OLP@",
 	"OTP@",
 	"PWR@",
-};
-
-battery_voltage_t voltages[] = {
-	{
-		150,
-		 90,
-		"NIMH"
-	},
-	{
-		241,
-		193,
-		"LEAD"
-	},
-	{
-		365,
-		210,
-		"LIFE"
-	},
-	{
-		410,
-		300,
-		"LIPO"
-	},
-	{
-		420,
-		330,
-		"LIIO"
-	}
 };
 
 
@@ -354,143 +320,6 @@ void main(void) {
 		run_pressed = 0;
 		disp_write(digits[3], 0, DP_BOT);
 	}
-
-/*
-	while (1) {
-		showNumber((uint16_t)systick, 2, DP_TOP);
-		while ((UART2->SR & (uint8_t)UART2_SR_RXNE)){
-			rcvBuff[countRx++] = (char) getchar();
-		}
-		printf("%s", rcvBuff);*
-	}
-	while (1) {
-		uint16_t pwm = 0;
-		uint16_t ma = 1000;
-		bool chng = 1;
-		while (1) {
-			if (encoder_val < 0) {
-				if (set_values[set_mode])
-					set_values[set_mode] -= 100;
-				chng = 1;
-			} else if (encoder_val > 0) {
-				set_values[set_mode] += 100;
-				//pwm += 100;
-				chng = 1;
-			}
-			if (run_pressed) {
-				if (GPIOE->ODR & GPIO_PIN_5) {
-					GPIOE->ODR &= ~GPIO_PIN_5;
-				} else {
-					GPIOE->ODR |= GPIO_PIN_5;
-				}
-				run_pressed = 0;
-			}
-			//showNumber((10720 - analogRead(ADC1_CHANNEL_0) * 10) >> 3, 1, DP_TOP);
-			showNumber(set_values[set_mode], 3, DP_TOP);
-			//delay(300000);
-			disp_write(digits[0], chars[GPIOC->IDR & GPIO_PIN_2], DP_BOT);
-			if (chng) {
-				//showNumber(pwm, 1, DP_TOP);
-				uint32_t set_pwm = 2119;
-				set_pwm *= ma;
-				set_pwm += 60043;
-				//pwm = I_PWM_FACTOR * ma + I_PWM_OFFSET;
-				pwm = set_pwm / 1000;
-				TIM1->CCR1H = pwm >> 8;
-				TIM1->CCR1L = (uint8_t) pwm;
-				//showNumber((TIM1->CCR1H << 8) | TIM1->CCR1L, 0, DP_TOP);
-				showNumber(ma, 3, DP_TOP);
-				showNumber(pwm, 0, DP_BOT);
-				if (ma < 1000)
-					showNumber(ma, 0, DP_BOT);
-				else if (ma < 10000)
-					showNumber(ma / 10, 2, DP_BOT);
-				else if (ma < 100000)
-					showNumber(ma / 100, 1, DP_BOT);
-				*//*
-				chng = 0;
-				encoder_val = 0;
-				printf("%d\n", pwm);
-			}
-			getVoltage();
-			calcPWM();
-			getTemp();
-			//setFan();
-		}
-	}
-	while (1) {
-		bool chng = 0;
-		if (encoder_val < 0) {
-			if (!TIM1->CCR1L) TIM1->CCR1H--;
-			TIM1->CCR1L--;
-			chng = 1;
-		} else if (encoder_val > 0) {
-			if (TIM1->CCR1L == 0xFF) TIM1->CCR1H++;
-			TIM1->CCR1L++;
-			chng = 1;
-		}
-		if (chng) {
-			showNumber((TIM1->CCR1H << 8) | TIM1->CCR1L, 0, DP_TOP);
-			chng = 0;
-			encoder_val = 0;
-		}
-
-	}
-	delay(1500000);
-
-	//GPIOC->ODR &= ~GPIO_PIN_1;
-	GPIOE->ODR |= GPIO_PIN_5; // LOAD OFF
-
-	disp_write(digits[0], chars[EXTI->CR1], DP_TOP);
-	disp_write(digits[1], chars[EXTI->CR2], DP_TOP);
-	disp_write(digits[2], chars[12], DP_TOP);
-	disp_write(digits[3], chars[13], DP_TOP);
-	disp_write(digits[0], 0, DP_BOT);
-	disp_write(digits[1], 0, DP_BOT);
-	disp_write(digits[2], 0, DP_BOT);
-	disp_write(digits[3], 0, DP_BOT);
-
-	//printf("test\nDies ist ein Test!");
-	//EXTI->CR1 |= EXTI_SENSITIVITY_FALL_ONLY << 4; //FALL_ONLY
-
-	GPIOD->ODR &= ~GPIO_PIN_0;
-	__asm__ ("rim"); // interrupts enabled
-	//while (1) {
-	//	showMenu();
-	//}
-	while (1) {
-		uint16_t v1 = analogRead12(ADC1_CHANNEL_2);
-		showNumber(v1 / 10, 0, DP_TOP);
-		showNumber(v1 % 10, 0, DP_BOT);
-		delay(300000);
-	}
-	while (1) {
-		uint16_t v1, v_ref, v2, v_load, v;
-		v1 = analogRead12(ADC1_CHANNEL_1);
-		v_load = 1.02217839986557 * v1 - 81.5878664441528;
-		//v_load = 4.05175 * v1 / 4 - 64.7543;
-		//GPIOD->ODR |= GPIO_PIN_0;
-		v2 = analogRead12(ADC1_CHANNEL_2);
-		v_ref = 0.891348658196074 * v2 - 80.4250357289787;
-		//v_ref = 3.52991 * v2 / 4 - 64.78; // ADC2
-		//GPIOD->ODR &= ~GPIO_PIN_0;
-		v = 0;
-		if (v1 > 20) {
-			v = v_load;
-			//if (v_ref >= v_load && v_ref < v_load + 100) {
-				v = v_ref;
-				disp_write(digits[2], chars[1], DP_BOT);
-			//} else {
-			//	disp_write(digits[2], chars[3], DP_BOT);
-			//}
-		}
-		disp_write(digits[0], chars[v / 1000], DP_TOP);
-		disp_write(digits[1], chars[(v / 100) % 10] | 0x80, DP_TOP);
-		disp_write(digits[2], chars[(v / 10) % 10], DP_TOP);
-		disp_write(digits[3], chars[v % 10], DP_TOP);
-		delay(300000);
-	}
-*/
 }
 
 //Voltage OK interrupt
