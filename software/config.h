@@ -13,5 +13,6 @@
 #define F_FAN 0.2
 
 #define F_UI_AUTODISPLAY 0.2
-
+#define F_BEEP_ERROR 2
+#define F_BEEP_KHZ 1 // 1, 2 or 4
 #endif

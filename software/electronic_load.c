@@ -256,8 +256,10 @@ void main(void) {
 				//showNumber(temperature, 1, DP_TOP);
 				disp_write(digits[3], LED_RUN * ((systick / 50) & 1), DP_BOT);
 				//TODO: Magic numbers
-				if((systick / 25) & 1) {
-					beeper_toggle();
+				if ((systick / (F_SYSTICK / F_BEEP_ERROR)) & 1) {
+					beeper_on();
+				} else {
+					beeper_off();
 				}
 			}
 			beeper_off();
