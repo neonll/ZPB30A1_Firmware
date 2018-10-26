@@ -2,20 +2,18 @@
 #include "uart.h"
 #include "utils.h"
 #include "ui.h"
-#include "stm8s_conf.h"
 #include "stdio.h"
 #include "tm1650.h"
 #include "eeprom.h"
 #include "timer.h"
 #include "todo.h"
 #include "settings.h"
-#include "inc/stm8s_clk.h"
 #include "load.h"
 #include "fan.h"
 #include "adc.h"
 #include "beeper.h"
-
-#define OVERSAMPLING 2
+#include "inc/stm8s_clk.h"
+#include "inc/stm8s_exti.h"
 
 #define MINUTE   60
 #define HOUR   3600
@@ -102,28 +100,6 @@ void setup(void)
 	settings_init();
 }
 
-uint16_t analogRead(ADC1_Channel_TypeDef ch) {
-	uint8_t adcH, adcL;
-	ADC1->CSR &= (uint8_t)(~ADC1_CSR_CH);
-	ADC1->CSR |= (uint8_t)(ch);
-
-	ADC1->CR1 |= ADC1_CR1_ADON;
-	while (!(ADC1->CSR & ADC1_IT_EOC));
-	adcL = ADC1->DRL;
-	adcH = ADC1->DRH;
-	ADC1->CSR &= ~ADC1_IT_EOC;
-	return (adcL | (adcH << 8));
-}
-
-uint16_t analogRead12(ADC1_Channel_TypeDef ch) {
-	uint16_t val = 0;
-	uint8_t i;
-	for (i = 0; i < 4 * OVERSAMPLING; i++) {
-		val += analogRead(ch);
-	}
-	return val / OVERSAMPLING;
-}
-
 void getTemp(void) {
 	uint16_t tmp = (10720 - analogRead(ADC1_CHANNEL_0) * 10) >> 3;
 	temperature = tmp;
@@ -193,7 +169,7 @@ void main(void) {
 	while (1) {
 		uint32_t start_time;
 		showMenu();
-		GPIOE->ODR &= ~GPIO_PIN_5;
+		GPIOE->ODR &= ~PINE_ENABLE; //TODO: load_disable()
 		running = 1;
 		setFan();
 		start_time = systick;
@@ -244,7 +220,7 @@ void main(void) {
 			tempFan();
 		}
 		running = 0;
-		GPIOE->ODR |= GPIO_PIN_5;
+		GPIOE->ODR |= PINE_ENABLE; //TODO: load_enable();
 		TIM1->CCR1H = 0; // turn off PWM, to avoid current peak on next start
 		TIM1->CCR1L = 0;
 		encoder_pressed = 0;
