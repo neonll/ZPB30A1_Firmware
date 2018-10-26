@@ -2,7 +2,7 @@
 #include "tm1650.h"
 #include "timer.h"
 #include "eeprom.h"
-#include "todo.h"
+#include "load.h"
 #include "stm8s_gpio.h"
 
 volatile int8_t encoder_val = 0;
@@ -10,7 +10,7 @@ volatile bool encoder_pressed = 0;
 volatile bool run_pressed = 0;
 uint8_t brightness[] = {0, 0};
 bool option_changed = 0;
-bool beeper_on = 0;
+volatile bool redraw = 0;
 
 char mode_name[][5] = {
 	"AMPS",

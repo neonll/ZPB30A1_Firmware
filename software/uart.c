@@ -1,9 +1,10 @@
 #include "uart.h"
 #include "config.h"
-#include "stm8s.h"
 #include "stm8s_uart2.h"
+#include "todo.h"
+#include <stdio.h>
 
-void setupUART()
+void uart_init()
 {
 	uint32_t Mant, Mant100;
 	Mant = ((uint32_t)F_CPU / (BAUDR << 4));
@@ -26,7 +27,9 @@ int getchar(void)
 	return UART2->DR;
 }
 
-void UART2_RX_IRQHandler() __interrupt(21){
+//TODO: Rewrite this function. printf in IRQ context is never a good idea.
+void UART2_RX_IRQHandler() __interrupt(21)
+{
 	char tmp = UART2->DR;
 	if(tmp == 'S'){	//start command from LogView
 		printf("$N$;Electronic Load\r\n");

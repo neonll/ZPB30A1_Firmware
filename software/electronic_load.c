@@ -8,7 +8,11 @@
 #include "eeprom.h"
 #include "timer.h"
 #include "todo.h"
-#include "inc/stm8s_clk.h"
+#include "settings.h"
+#include "stm8s_clk.h"
+#include "load.h"
+#include "fan.h"
+#include "adc.h"
 
 #define OVERSAMPLING 2
 
@@ -21,11 +25,6 @@ typedef struct {
 	char     name[5];
 } battery_voltage_t;
 
-bool              logging         = 0;
-volatile bool     calc_fan        = 0;
-volatile bool     redraw          = 0;
-bool              running         = 0;
-sink_mode_t       set_mode        = MODE_CC;
 error_t           error           = ERROR_NONE;
 char              error_msg[][5]  = {
 	"UVP@",
@@ -34,14 +33,6 @@ char              error_msg[][5]  = {
 	"OTP@",
 	"PWR@",
 };
-uint16_t          set_values[4]; // CC/CW/CR/CV
-bool              cutoff_active   = 0;
-uint16_t          cutoff_voltage  = 270;
-uint16_t          temperature     = 0;	// 0,1°C
-uint16_t          voltage         = 0;	// 0,01V
-uint16_t          set_current     = 0;	// 0,001A
-volatile uint32_t mAmpere_seconds  = 0;	//mAs
-volatile uint32_t mWatt_seconds    = 0;	//mWs
 
 battery_voltage_t voltages[] = {
 	{
@@ -126,23 +117,18 @@ void gpio_init()
 	GPIOE->ODR = PINE_ENABLE; // load off
 	GPIOE->DDR = PINE_ENABLE; // pullup
 
+	EXTI->CR2    = EXTI_SENSITIVITY_FALL_ONLY; // TLI
+	EXTI->CR1   |= EXTI_SENSITIVITY_RISE_FALL << 2; // GPIOB
+	EXTI->CR1   |= EXTI_SENSITIVITY_RISE_FALL << 4; // GPIOC
+	EXTI->CR1   |= EXTI_SENSITIVITY_RISE_FALL << 6; // GPIOD
 }
 
 void setup(void)
 {
 	clock_init();
 	gpio_init();
-
-	ADC1->CR2 |= ADC1_ALIGN_RIGHT;
-	ADC1->CSR |= ADC1_CHANNEL_1;
-	ADC1->CR1 |= ADC1_CR1_ADON;
-
-	setupUART();
-
-	EXTI->CR2    = EXTI_SENSITIVITY_FALL_ONLY; // TLI
-	EXTI->CR1   |= EXTI_SENSITIVITY_RISE_FALL << 2; // GPIOB
-	EXTI->CR1   |= EXTI_SENSITIVITY_RISE_FALL << 4; // GPIOC
-	EXTI->CR1   |= EXTI_SENSITIVITY_RISE_FALL << 6; // GPIOD
+	adc_init();
+	uart_init();
 
 	// FAN
 	//TIM3->ARRH   = 0x10;
@@ -278,46 +264,6 @@ void calcPWM(void) {
 	// set_value[1] / voltage;
 	// CR
 	// voltage / set_value[2]
-}
-
-void setFan() {
-	if (temperature > 850) { // Over temperature protection
-		TIM3->CCR2H  = 0xFF;
-		TIM3->CCR2L  = 0xFF;
-		error = ERROR_OTP;
-	}
-	if (temperature > 400) {
-		TIM3->CCR2H  = (temperature * 54) >> 8;
-		TIM3->CCR2L  = (uint8_t)(temperature * 54);
-	} else if (~GPIOE->ODR & GPIO_PIN_5) { // Set minimum pwm of 1/3 if switched on
-		TIM3->CCR2H  = 0x55;
-		TIM3->CCR2L  = 0x55;
-	} else {
-		TIM3->CCR2H  = 0;
-		TIM3->CCR2L  = 0;
-	}
-}
-
-#if 0
-void testFan() {
-	uint16_t i;
-	for (i = 0; i < 0xFFFF; i++) {
-		TIM3->CCR2H  = i >> 8;
-		TIM3->CCR2L  = i & 0xFF;
-		delay(50);
-	}
-	delay(1500000);
-	TIM3->CCR2H  = 0;
-	TIM3->CCR2L  = 0;
-}
-#endif
-
-void tempFan() {
-	if (calc_fan) {
-		getTemp();
-		setFan();
-		calc_fan = 0;
-	}
 }
 
 
@@ -564,27 +510,6 @@ void main(void) {
 //Voltage OK interrupt
 void GPIOD_Handler() __interrupt(6) {
 }
-// TIM2 UO (CC = 14)
-void TIM2_UPD_OVF_Handler() __interrupt(13) {
-	TIM2->SR1 &= ~TIM2_SR1_UIF;
-
-	tenmillis++;
-	if (tenmillis % 50 == 0) {
-		redraw = 1;
-	}
-	if (tenmillis % 100 == 0 && running) {
-		// watts can be 60000 max.
-		uint32_t mWatt = set_current;
-		mWatt *= voltage;
-		mWatt /= 100;	//voltage is in 0,01V unit
-		mWatt_seconds += mWatt;
-		mAmpere_seconds += set_current;
-	}
-	if (tenmillis % 5000 == 0) {
-		calc_fan = 1;
-	}
-}
-
 
 /* If you have multiple source files in your project, interrupt service routines
  can be present in any of them, but a prototype of the isr MUST be present or
@@ -592,3 +517,5 @@ void TIM2_UPD_OVF_Handler() __interrupt(13) {
 void GPIOB_Handler() __interrupt(4);
 void GPIOC_Handler() __interrupt(5);
 void UART2_RX_IRQHandler() __interrupt(21);
+// void GPIOD_Handler() __interrupt(6);
+void TIM2_UPD_OVF_Handler() __interrupt(13);

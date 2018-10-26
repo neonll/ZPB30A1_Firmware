@@ -14,5 +14,5 @@ extern volatile bool encoder_pressed;
 extern volatile bool run_pressed;
 extern uint8_t brightness[];
 extern bool option_changed;
-
+extern volatile bool redraw;
 #endif
