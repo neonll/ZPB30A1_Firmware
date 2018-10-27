@@ -1,6 +1,7 @@
 #ifndef _SETTINGS_H_
 #define _SETTINGS_H_
-#include "bool.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 
 typedef enum {

@@ -1,7 +1,7 @@
 #ifndef _LOAD_H_
 #define _LOAD_H_
-
-#include "bool.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 typedef enum {
 	ERROR_NONE,

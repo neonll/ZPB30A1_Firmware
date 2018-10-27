@@ -3,6 +3,5 @@
 
 #include <stdint.h>
 
-void delay(uint32_t d);
 void delay10ms(uint32_t d);
 #endif

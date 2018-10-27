@@ -1,6 +1,7 @@
 #ifndef _UI_H_
 #define _UI_H_
-#include "todo.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 void ui_timer();
 

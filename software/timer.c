@@ -1,6 +1,4 @@
 #include "timer.h"
-#include "load.h"
-#include "ui.h"
 #include "config.h"
 #include "inc/stm8s_tim2.h"
 

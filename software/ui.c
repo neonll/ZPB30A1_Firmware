@@ -4,6 +4,7 @@
 #include "eeprom.h"
 #include "load.h"
 #include "config.h"
+#include "settings.h"
 #include "inc/stm8s_gpio.h"
 
 volatile int8_t encoder_val = 0;

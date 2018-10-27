@@ -1,7 +1,6 @@
 #include "uart.h"
 #include "config.h"
 #include "inc/stm8s_uart2.h"
-#include "todo.h"
 #include <stdio.h>
 
 void uart_init()

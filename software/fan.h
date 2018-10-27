@@ -1,6 +1,6 @@
 #ifndef _FAN_H_
 #define _FAN_H_
-#include "bool.h"
+#include <stdint.h>
 
 extern uint16_t temperature;	// 0,1°C
 
