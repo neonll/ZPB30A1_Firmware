@@ -114,7 +114,7 @@ void main(void) {
 				error = ERROR_OVP;
 				break;
 			}
-			if (cutoff_active && voltage < cutoff_voltage) {
+			if (settings.cutoff_enabled && voltage < settings.cutoff_voltage) {
 				error = ERROR_UVP;
 				break;
 			}
@@ -143,9 +143,7 @@ void main(void) {
 				}
 				//printf("%lu; %u; %u; %lu; %lu; %u\n", (systick - start_time), set_current, voltage, mAmpere_seconds, mWatt_seconds, temperature);
 				//showNumber(analogRead(ADC1_CHANNEL_0), 4, DP_TOP);
-				if(logging){
-					printf("$%u;%u;%lu;%lu;%u\r\n", set_current, voltage, mAmpere_seconds, mWatt_seconds, temperature);
-				}
+				printf("$%u;%u;%lu;%lu;%u\r\n", set_current, voltage, mAmpere_seconds, mWatt_seconds, temperature);
 
 				showNumber(set_current, 3, DP_BOT);
 				disp_write(digits[3], LED_RUN | (1 << s_var), DP_BOT);

@@ -154,11 +154,11 @@ void selectMode(void)
 {
 	while (1) {
 		blinkDisplay(DP_BOT);
-		set_mode = change_u8(set_mode, 2);		//CV mode not supported yet
+		settings.mode = change_u8(settings.mode, 2);		//CV mode not supported yet
 		if (option_changed) {
 			option_changed = 0;
 			encoder_val = 0;
-			showText(mode_text[set_mode], DP_BOT);
+			showText(mode_text[settings.mode], DP_BOT);
 		}
 		if (encoder_pressed) {
 			settings_update();
@@ -204,9 +204,9 @@ uint16_t selectUInt16(uint16_t val, uint16_t max)
 			encoder_val = 0;
 			showNumber(val, 3, DP_BOT);
 
-			if (set_values[set_mode] >= 10000) {
+			if (settings.setpoints[settings.mode] >= 10000) {
 				inc = 100;
-			} else if (set_values[set_mode] >= 1000) {
+			} else if (settings.setpoints[settings.mode] >= 1000) {
 				inc = 10;
 			} else {
 				inc = 1;
@@ -227,7 +227,7 @@ void selectValue(void)
 	uint16_t inc = 10;
 	option_changed = 1;
 	char opts[][5] = {"MODE", "VAL@", "SHDN", "CUTO", "BEEP"};
-	showText(opts[set_mode], DP_TOP);
+	showText(opts[settings.mode], DP_TOP);
 	disp_write(digits[3], LED_HIGH, DP_BOT);
 	while (1) {
 		blinkDisplay(DP_BOT);
@@ -245,13 +245,13 @@ void selectValue(void)
 		if (option_changed) {
 			option_changed = 0;
 			encoder_val = 0;
-			showNumber(set_values[set_mode], 3, DP_BOT);
+			showNumber(settings.setpoints[settings.mode], 3, DP_BOT);
 
-			/*if (set_values[set_mode] >= 100000) {
+			/*if (settings.setpoints[settings.mode] >= 100000) {
 				inc = 1000;
-			} else */if (set_values[set_mode] >= 10000) {
+			} else */if (settings.setpoints[settings.mode] >= 10000) {
 				inc = 100;
-			} else if (set_values[set_mode] >= 1000) {
+			} else if (settings.setpoints[settings.mode] >= 1000) {
 				inc = 10;
 			} else {
 				inc = 1;
@@ -260,7 +260,7 @@ void selectValue(void)
 				inc *= 10;
 			}
 		}
-		set_values[set_mode] = change_u16(set_values[set_mode], 10000, inc);
+		settings.setpoints[settings.mode] = change_u16(settings.setpoints[settings.mode], 10000, inc);
 	}
 }
 
@@ -286,9 +286,9 @@ void selectCutoff(void) {
 		if (option_changed) {
 			option_changed = 0;
 			encoder_val = 0;
-			showNumber(cutoff_voltage / 10, 1, DP_BOT);
+			showNumber(settings.cutoff_voltage / 10, 1, DP_BOT);
 		}
-		cutoff_voltage = change_u16(cutoff_voltage, 2900, hl_opt ? 10 : 100);
+		settings.cutoff_voltage = change_u16(settings.cutoff_voltage, 2900, hl_opt ? 10 : 100);
 	}
 }
 
@@ -320,19 +320,19 @@ void showMenu()
 			showText(opts[opt], DP_TOP);
 			switch (opt) {
 				case 0:
-					showText(mode_text[(uint8_t)set_mode], DP_BOT);
+					showText(mode_text[(uint8_t)settings.mode], DP_BOT);
 					break;
 				case 1:
-					showNumber(set_values[(uint8_t)set_mode], 3, DP_BOT);
+					showNumber(settings.setpoints[(uint8_t)settings.mode], 3, DP_BOT);
 					break;
 				case 2:
-					showText(on_off_text[cutoff_active], DP_BOT);
+					showText(on_off_text[settings.cutoff_enabled], DP_BOT);
 					break;
 				case 3:
-					showNumber(cutoff_voltage, 2, DP_BOT);
+					showNumber(settings.cutoff_voltage, 2, DP_BOT);
 					break;
 				case 4:
-					showText(on_off_text[beeper_enabled], DP_BOT);
+					showText(on_off_text[settings.beeper_enabled], DP_BOT);
 					break;
 			}
 			old_opt = opt;
@@ -346,17 +346,17 @@ void showMenu()
 					selectMode();
 					break;
 				case 1:
-					showText(mode_units[set_mode], DP_TOP);
-					set_values[set_mode] = selectUInt16(set_values[set_mode], max_values[set_mode]);
+					showText(mode_units[settings.mode], DP_TOP);
+					settings.setpoints[settings.mode] = selectUInt16(settings.setpoints[settings.mode], max_values[settings.mode]);
 					break;
 				case 2:
-					cutoff_active = selectBool(cutoff_active);
+					settings.cutoff_enabled = selectBool(settings.cutoff_enabled);
 					break;
 				case 3:
 					selectCutoff();
 					break;
 				case 4:
-					beeper_enabled = selectBool(beeper_enabled);
+					settings.beeper_enabled = selectBool(settings.beeper_enabled);
 					break;
 			}
 			settings_update();

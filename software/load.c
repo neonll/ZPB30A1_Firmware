@@ -55,17 +55,17 @@ void calcPWM(void)
 {
 	uint16_t pwm;
 	uint32_t current;
-	switch (set_mode) {
+	switch (settings.mode) {
 		case MODE_CC:
-			current = set_values[MODE_CC];
+			current = settings.setpoints[MODE_CC];
 			break;
 		case MODE_CW: // I = P / U
-			current = set_values[MODE_CW];
+			current = settings.setpoints[MODE_CW];
 			current *= 100; //voltage is in V/100
 			current /= voltage;
 			break;
 		case MODE_CR: // I = U / R
-			current = ((uint32_t) voltage * 10000) / set_values[MODE_CR]; //R in 0,001 Ohm
+			current = ((uint32_t) voltage * 10000) / settings.setpoints[MODE_CR]; //R in 0,001 Ohm
 			break;
 	}
 	if (current > 10000) current = 10000;

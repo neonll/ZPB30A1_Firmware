@@ -1,45 +1,51 @@
 #include "settings.h"
 #include "eeprom.h"
-bool logging = 0;
-sink_mode_t set_mode = MODE_CC;
-uint16_t set_values[4]; // CC/CW/CR/CV
-bool beeper_enabled = 0;
-uint16_t cutoff_voltage = 270;
-bool cutoff_active = 0;
+settings_t settings;
 
-#define MEM_CHECK 0x00
-#define MEM_MODE  0x01
-#define MEM_BEEP  0x02
-#define MEM_CUTO  0x03
-#define MEM_VALUES 0x10 /*8 bytes */
+/* Note: The checksum is placed after the data so when the settings size grows
+   The checksum automatically becomes invalid. */
 
-#define MEM_CUTV  0x50
-//                0x51
-#define MEM_TOUT  0x52
-//                0x53
+static uint8_t settings_calc_checksum(uint8_t *data, uint16_t size)
+{
+    uint16_t i;
+    uint8_t checksum = 0x55;
+    for (i = 0; i < size; i++)
+    {
+        checksum ^= *data++;
+    }
+    return checksum;
+}
 
 void settings_init()
 {
-    //TODO: Check if eeprom contents are valid and use default values otherwise
-    set_mode = (sink_mode_t)eeprom_read8(MEM_MODE);
-    uint8_t i;
-    for (i=0; i<NUM_MODES; i++) {
-	    set_values[i] = eeprom_read16(MEM_VALUES+2*i);
+    uint16_t addr;
+    uint8_t *data = (uint8_t*)(&settings);
+    for (addr = 0; addr < sizeof(settings); addr++)
+    {
+        data[addr] = eeprom_read8(addr);
     }
-	beeper_enabled = eeprom_read8(MEM_BEEP);
-	cutoff_active = eeprom_read8(MEM_CUTO);
-	cutoff_voltage = eeprom_read16(MEM_CUTV);
+    uint8_t checksum = eeprom_read8(sizeof(settings));
+    if (checksum != settings_calc_checksum(data, sizeof(settings))) {
+        // Invalid checksum => initialize default values
+        settings.mode = MODE_CC;
+        settings.setpoints[MODE_CC] = 0;
+        settings.setpoints[MODE_CW] = 0;
+        settings.setpoints[MODE_CR] = 0;
+        settings.setpoints[MODE_CV] = 0;
+        settings.beeper_enabled = 1;
+        settings.cutoff_enabled = 0;
+        settings.cutoff_voltage = 123;
+    }
 }
 
 void settings_update()
 {
-    //eeprom_write_XX() only writes changed data
-    eeprom_write8(MEM_MODE, set_mode);
-    uint8_t i;
-    for (i=0; i<NUM_MODES; i++) {
-        eeprom_write16(MEM_VALUES+2*i, set_values[i]);
+    uint16_t addr;
+    uint8_t *data = (uint8_t*)(&settings);
+    for (addr = 0; addr < sizeof(settings); addr++)
+    {
+        eeprom_write8(addr, data[addr]);
     }
-    eeprom_write8(MEM_BEEP, beeper_enabled);
-    eeprom_write8(MEM_CUTO, cutoff_active);
-    eeprom_write16(MEM_CUTV, cutoff_voltage);
+    uint8_t checksum = settings_calc_checksum(data, sizeof(settings));
+    eeprom_write8(sizeof(settings), checksum);
 }

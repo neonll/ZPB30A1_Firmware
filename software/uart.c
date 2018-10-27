@@ -35,10 +35,5 @@ void UART2_RX_IRQHandler() __interrupt(21)
 		printf("$N$;Electronic Load\r\n");
 		printf("$C$;Current [A,I];Voltage [V,U];Ampere hour[Ah];Watt hour[Wh];Temperature[°C,T]\r\n");
 		printf("$F$;0.001;0.01;0.000000277778;0.000000277778;0,1\r\n");	//convert units for logview
-		logging = 1;
-	}
-	else if(tmp == 'E') {
-		printf("End of logging");
-		logging = 0;
 	}
 }

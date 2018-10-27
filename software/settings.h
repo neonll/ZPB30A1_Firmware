@@ -1,6 +1,8 @@
 #ifndef _SETTINGS_H_
 #define _SETTINGS_H_
 #include "bool.h"
+
+
 typedef enum {
 	MODE_CC,
 	MODE_CW,
@@ -8,12 +10,17 @@ typedef enum {
 	MODE_CV,
 	NUM_MODES
 } sink_mode_t;
-extern sink_mode_t set_mode;
-extern uint16_t set_values[4]; // CC/CW/CR/CV
-extern bool beeper_enabled;
-extern bool logging;
-extern bool cutoff_active;
-extern uint16_t cutoff_voltage;
+
+typedef struct {
+	sink_mode_t mode;
+	uint16_t setpoints[NUM_MODES]; // CC/CW/CR/CV
+	bool beeper_enabled;
+	bool cutoff_enabled;
+	uint16_t cutoff_voltage;
+} settings_t;
+
+extern settings_t settings;
+
 void settings_init();
 void settings_update();
 #endif

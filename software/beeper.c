@@ -50,7 +50,7 @@ void beeper_init()
 
 void beeper_on()
 {
-    if (beeper_enabled && !(BEEP->CSR & BEEP_CSR_BEEPEN)) {
+    if (settings.beeper_enabled && !(BEEP->CSR & BEEP_CSR_BEEPEN)) {
         BEEP->CSR |= BEEP_CSR_BEEPEN;
     }
 }
