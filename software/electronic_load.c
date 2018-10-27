@@ -77,7 +77,6 @@ void main(void) {
 	fan_init();
 	settings_init();
 
-	delay10ms(4);
 	setBrightness(2, DP_BOT);
 	setBrightness(2, DP_TOP);
 	showText("BOOT", DP_TOP);

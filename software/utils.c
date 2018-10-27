@@ -5,5 +5,5 @@
 void delay10ms(uint32_t d)
 {
 	uint32_t start = systick;
-	while(systick / (F_SYSTICK/100) < start + d);
+	while ((uint32_t)(systick - start) < d * (F_SYSTICK/100));
 }
