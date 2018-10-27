@@ -1,7 +1,8 @@
 #include "tm1650.h"
-#include "stm8s.h"
+#include "config.h"
+#include "inc/stm8s_gpio.h"
 
-#define PIN_I2C_CLK (1<<5)
+#define PIN_I2C_CLK PINC_SCL
 #define I2C_DELAY 0
 
 uint8_t digits[] = {

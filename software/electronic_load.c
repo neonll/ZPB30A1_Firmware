@@ -41,44 +41,21 @@ void clock_init()
 
 void gpio_init()
 {
-	// port B
-	#define PINB_ENC_A (1u<<5)
-	#define PINB_ENC_B (1u<<4)
 	GPIOB->CR1 = PINB_ENC_A | PINB_ENC_B; // Pullup
 	GPIOB->CR2 = PINB_ENC_A | PINB_ENC_B; // Irq
 
-	//port C
-	#define PINC_I_SET (1u<<1)
-	#define PINC_OL_DETECT (1u<<2)
-	#define PINC_ENC_P (1u<<3)
-	#define PINC_RUN_P (1u<<4)
-	#define PINC_SCL (1u<<5)
-	#define PINC_SDA1 (1u<<6)
-	#define PINC_SDA2 (1u<<7)
 	GPIOC->DDR = PINC_I_SET | PINC_SCL | PINC_SDA1 | PINC_SDA2;
-	//TODO: In the original version SDA is configured as push-pull
-	// but that doesn't make sense
 	GPIOC->CR1 = PINC_I_SET | PINC_SCL | // push pull
 				 PINC_OL_DETECT | PINC_ENC_P | PINC_RUN_P; // pullup
 	GPIOC->CR2 = PINC_OL_DETECT | PINC_ENC_P | PINC_RUN_P |  // irq
 				 PINC_SCL | PINC_SDA1 | PINC_SDA2; // 10 MHz
 
-	// port D
-	#define PIND_FAN (1u<<0)
-	#define PIND_SWIM (1u<<1)
-	#define PIND_BUS_F (1u<<2)
-	#define PIND_V_OK (1u<<3)
-	#define PIND_BEEPER (1u<<4)
-	#define PIND_TX (1u<<5)
-	#define PIND_RX (1u<<6)
-	#define PIND_TLI (1u<<7)
+
 	GPIOD->DDR = PIND_FAN | PIND_BUS_F | PIND_BEEPER | PIND_TX;
 	GPIOD->CR1 = PIND_FAN | PIND_BUS_F | PIND_BEEPER | PIND_TX | // push pull
 				 PIND_V_OK | PIND_TLI; // pullup
 	GPIOD->CR2 = PIND_V_OK | PIND_TLI; // irq
 
-	// port E
-	#define PINE_ENABLE (1<<5)
 	GPIOE->ODR = PINE_ENABLE; // load off
 	GPIOE->DDR = PINE_ENABLE; // pullup
 
@@ -88,8 +65,9 @@ void gpio_init()
 	EXTI->CR1   |= EXTI_SENSITIVITY_RISE_FALL << 6; // GPIOD
 }
 
-void setup(void)
-{
+
+
+void main(void) {
 	clock_init();
 	gpio_init();
 	adc_init();
@@ -97,69 +75,13 @@ void setup(void)
 	systick_init();
 	load_init();
 	beeper_init();
+	fan_init();
 	settings_init();
-}
 
-void getTemp(void) {
-	uint16_t tmp = (10720 - analogRead(ADC1_CHANNEL_0) * 10) >> 3;
-	temperature = tmp;
-}
-
-void getVoltage(void) {
-	uint16_t v1, v_ref, v2, v_load;
-	v1 = analogRead12(ADC1_CHANNEL_1);
-	//v_load = 1.02217839986557 * v1 - 81.5878664441528;
-	v_load = 1.012877085 * v1 - 84.025827; // my new calibration with precision measuring
-	v2 = analogRead12(ADC1_CHANNEL_2);
-	//v_ref = 0.891348658196074 * v2 - 80.4250357289787;
-	v_ref = 0.8921068686 * v2 - 83.353412; // my new calibration with precision measuring
-	if (v1 > 85) {
-		voltage = v_load;
-		if (v_ref >= v_load && v_ref < v_load + 100) {
-			voltage = v_ref;
-		}
-	}
-}
-
-void calcPWM(void) {
-	uint16_t pwm;
-	uint32_t current;
-	switch (set_mode) {
-		case MODE_CC:
-			current = set_values[MODE_CC];
-			break;
-		case MODE_CW: // I = P / U
-			current = set_values[MODE_CW];
-			current *= 100; //voltage is in V/100
-			current /= voltage;
-			break;
-		case MODE_CR: // I = U / R
-			current = ((uint32_t) voltage * 10000) / set_values[MODE_CR]; //R in 0,001 Ohm
-			break;
-	}
-	if (current > 10000) current = 10000;
-	if (current < 130) current = 130; //load can't go lower then 130mA even with 0 duty cycle
-	set_current = current;
-	//pwm = I_PWM_FACTOR * current + I_PWM_OFFSET;
-	pwm = 2.275235373 * current - 287.0860829; // Output current is linear function of PWM. Regression gained from real measuring.
-	TIM1->CCR1H = pwm >> 8;
-	TIM1->CCR1L = (uint8_t) pwm;
-	// CC
-	// set_value[0];
-	// CW
-	// set_value[1] / voltage;
-	// CR
-	// voltage / set_value[2]
-}
-
-
-void main(void) {
-	setup();
 	delay(300000);
 	setBrightness(2, DP_BOT);
 	setBrightness(2, DP_TOP);
 	showText("BOOT", DP_TOP);
-	printf("LOAD READY\n");
 	__asm__ ("rim");
 
 	beeper_on();
@@ -167,11 +89,23 @@ void main(void) {
 	beeper_off();
 
 	while (1) {
+		if (systick_flag & SYSTICK_OVERFLOW)
+		{
+			load_disable();
+			//TODO: Generalize error handler
+			showText("SYST", DP_TOP);
+			showText("ERR", DP_BOT);
+			continue;  // do not perform any other actions.
+		}
+		if (systick_flag & SYSTICK_COUNT) {
+			fan_timer();
+		}
+
+		/////////////////////// OLD code
 		uint32_t start_time;
 		showMenu();
-		GPIOE->ODR &= ~PINE_ENABLE; //TODO: load_disable()
-		running = 1;
-		setFan();
+		load_disable();
+		load_active = 1;
 		start_time = systick;
 
 		while (!run_pressed && error == ERROR_NONE) {
@@ -217,9 +151,8 @@ void main(void) {
 				disp_write(digits[3], LED_RUN | (1 << s_var), DP_BOT);
 				redraw = 0;
 			}
-			tempFan();
 		}
-		running = 0;
+		load_active = 0;
 		GPIOE->ODR |= PINE_ENABLE; //TODO: load_enable();
 		TIM1->CCR1H = 0; // turn off PWM, to avoid current peak on next start
 		TIM1->CCR1L = 0;
@@ -228,7 +161,6 @@ void main(void) {
 			showText("ERR", DP_BOT);
 			showText(error_msg[error - 1], DP_TOP);
 			while (!encoder_pressed) {
-				tempFan();
 				//showNumber(temperature, 1, DP_TOP);
 				disp_write(digits[3], LED_RUN * ((systick / 50) & 1), DP_BOT);
 				//TODO: Magic numbers

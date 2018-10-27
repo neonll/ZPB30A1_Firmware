@@ -21,7 +21,6 @@ all: bin
 
 # SDCC includes working wrong on Windows with "/" slahes
 ifeq ($(OS),Windows_NT)
-INCLUDES=-I.\\inc
 ifeq ($(STLINK_VERSION),2)
 PROGRAMMER=ST-LINK-V2
 else
@@ -30,7 +29,6 @@ endif
 flash: flash_windows
 unlock: unlock_windows
 else
-INCLUDES=-I./inc
 PROGRAMMER=stlinkv$(STLINK_VERSION)
 flash: flash_unix
 unlock: unlock_unix

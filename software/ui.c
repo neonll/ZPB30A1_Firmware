@@ -108,7 +108,6 @@ void blinkDisplay(uint8_t disp)
 		brightness[dptop] = !brightness[dptop];
 		setBrightness(1 + brightness[dptop], disp);
 	}
-	tempFan();
 }
 
 uint8_t change_u8(uint8_t var, uint8_t max)

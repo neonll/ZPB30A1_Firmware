@@ -19,7 +19,7 @@ uint16_t analogRead(ADC1_Channel_TypeDef ch)
 	adcL = ADC1->DRL;
 	adcH = ADC1->DRH;
 	ADC1->CSR &= ~ADC1_IT_EOC;
-	return (adcL | (adcH << 8));
+	return (adcL | ((uint16_t)adcH << 8));
 }
 
 uint16_t analogRead12(ADC1_Channel_TypeDef ch)

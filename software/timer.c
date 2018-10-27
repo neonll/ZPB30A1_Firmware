@@ -1,11 +1,11 @@
 #include "timer.h"
 #include "load.h"
 #include "ui.h"
-#include "fan.h"
 #include "config.h"
 #include "inc/stm8s_tim2.h"
 
 volatile uint32_t systick = 0;
+volatile uint8_t systick_flag = 0;
 
 void systick_init()
 {
@@ -27,15 +27,12 @@ void TIM2_UPD_OVF_Handler() __interrupt(13)
 	if (systick % (uint32_t)(F_SYSTICK/F_DISPLAY_REDRAW) == 0) {
 		redraw = 1;
 	}
-	if (systick % (uint32_t)(F_SYSTICK/F_POWER_CALC) == 0 && running) {
+	if (systick % (uint32_t)(F_SYSTICK/F_POWER_CALC) == 0 && load_active) {
 		// watts can be 60000 max.
 		uint32_t mWatt = set_current;
 		mWatt *= voltage;
 		mWatt /= 100;	//voltage is in 0,01V unit
 		mWatt_seconds += mWatt;
 		mAmpere_seconds += set_current;
-	}
-	if (systick % (uint32_t)(F_SYSTICK/F_FAN) == 0) {
-		calc_fan = 1;
 	}
 }

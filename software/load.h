@@ -16,8 +16,13 @@ extern uint16_t  voltage; //0,01V
 extern uint16_t set_current; //mA
 extern volatile uint32_t mAmpere_seconds;	//mAs
 extern volatile uint32_t mWatt_seconds;	//mWs
-extern bool running;
+extern bool load_active;
 
 void load_init();
+void load_disable();
+
+
+void calcPWM(void);
+void getVoltage(void);
 
 #endif

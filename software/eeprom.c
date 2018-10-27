@@ -1,5 +1,5 @@
 #include "eeprom.h"
-#include "stm8s_flash.h"
+#include "inc/stm8s_flash.h"
 #define _MEM_(mem_addr) (*(volatile uint8_t *)(mem_addr))
 
 uint8_t eeprom_read8(uint16_t address) {
