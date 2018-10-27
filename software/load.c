@@ -34,6 +34,22 @@ void load_disable()
     GPIOE->ODR &= ~PINE_ENABLE;
 }
 
+
+void load_timer()
+{
+    static uint16_t timer = 0;
+    timer++;
+    if (timer == F_SYSTICK/F_POWER_CALC) {
+        timer = 0;
+        // watts can be 60000 max.
+        uint32_t mWatt = set_current;
+        mWatt *= voltage;
+        mWatt /= 100;	//voltage is in 0,01V unit
+        mWatt_seconds += mWatt / F_POWER_CALC;
+        mAmpere_seconds += set_current / F_POWER_CALC;
+    }
+}
+
 void getVoltage(void)
 {
 	uint16_t v1, v_ref, v2, v_load;

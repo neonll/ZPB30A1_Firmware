@@ -6,7 +6,6 @@
 #include "tm1650.h"
 #include "eeprom.h"
 #include "timer.h"
-#include "todo.h"
 #include "settings.h"
 #include "load.h"
 #include "fan.h"
@@ -87,7 +86,7 @@ void main(void) {
 	beeper_on();
 	delay10ms(20);
 	beeper_off();
-
+	systick_flag = 0; // Clear any overflows up to this point
 	while (1) {
 		if (systick_flag & SYSTICK_OVERFLOW)
 		{
@@ -99,9 +98,12 @@ void main(void) {
 		}
 		if (systick_flag & SYSTICK_COUNT) {
 			fan_timer();
+			ui_timer();
+			load_timer();
+			systick_flag &= ~ SYSTICK_COUNT;
 		}
 
-		/////////////////////// OLD code
+		/////////////////////// TODO: OLD code
 		uint32_t start_time;
 		showMenu();
 		load_disable();

@@ -49,6 +49,7 @@ void fan_timer()
 	static uint16_t timer = 0;
 	timer++;
 	if (timer == F_SYSTICK/F_FAN) {
+		timer = 0;
 		fan_update_temperature();
 		fan_set_pwm();
 	}

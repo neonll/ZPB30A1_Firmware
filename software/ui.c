@@ -3,7 +3,7 @@
 #include "timer.h"
 #include "eeprom.h"
 #include "load.h"
-#include "fan.h"
+#include "config.h"
 #include "inc/stm8s_gpio.h"
 
 volatile int8_t encoder_val = 0;
@@ -12,6 +12,19 @@ volatile bool run_pressed = 0;
 uint8_t brightness[] = {0, 0};
 bool option_changed = 0;
 volatile bool redraw = 0;
+
+
+void ui_timer()
+{
+	static uint16_t timer = 0;
+	timer++;
+	if (timer == F_SYSTICK/F_DISPLAY_REDRAW) {
+		timer = 0;
+		redraw = 1;
+	}
+}
+
+//// TODO: Old code
 
 char mode_units[][5] = {
 	"AMPS",

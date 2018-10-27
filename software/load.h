@@ -19,6 +19,7 @@ extern volatile uint32_t mWatt_seconds;	//mWs
 extern bool load_active;
 
 void load_init();
+void load_timer();
 void load_disable();
 
 

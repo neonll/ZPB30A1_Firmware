@@ -19,8 +19,6 @@
 #define ADC_OVERSAMPLING 2
 
 
-#define GPIO_DISPLAY GPIOC
-
 // port B
 #define PINB_ENC_A (1u<<5)
 #define PINB_ENC_B (1u<<4)
@@ -46,5 +44,10 @@
 
 // port E
 #define PINE_ENABLE (1<<5)
+
+
+#define GPIO_DISPLAY GPIOC
+#define DP_TOP PINC_SDA2
+#define DP_BOT PINC_SDA1
 
 #endif

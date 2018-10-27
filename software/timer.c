@@ -18,21 +18,12 @@ void systick_init()
 	TIM2->CR1   |= TIM2_CR1_CEN;
 }
 
-//TODO: Move calculations to main loop.
 void TIM2_UPD_OVF_Handler() __interrupt(13)
 {
-	TIM2->SR1 &= ~TIM2_SR1_UIF;
-
+	if (systick_flag & SYSTICK_COUNT) {
+		systick_flag |= SYSTICK_OVERFLOW;
+	}
+	systick_flag |= SYSTICK_COUNT;
 	systick++;
-	if (systick % (uint32_t)(F_SYSTICK/F_DISPLAY_REDRAW) == 0) {
-		redraw = 1;
-	}
-	if (systick % (uint32_t)(F_SYSTICK/F_POWER_CALC) == 0 && load_active) {
-		// watts can be 60000 max.
-		uint32_t mWatt = set_current;
-		mWatt *= voltage;
-		mWatt /= 100;	//voltage is in 0,01V unit
-		mWatt_seconds += mWatt;
-		mAmpere_seconds += set_current;
-	}
+	TIM2->SR1 &= ~TIM2_SR1_UIF;
 }

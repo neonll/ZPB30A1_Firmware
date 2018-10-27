@@ -2,8 +2,8 @@
 #define _UI_H_
 #include "todo.h"
 
-#define DP_TOP (1u<<7) //PC7
-#define DP_BOT (1u<<6) //PC6
+void ui_timer();
+
 
 void showMenu();
 void showText(char text[], uint8_t display);
