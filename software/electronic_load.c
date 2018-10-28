@@ -76,10 +76,8 @@ void main(void) {
 	beeper_init();
 	fan_init();
 	settings_init();
+	ui_init();
 
-	disp_brightness(2, DP_BOT);
-	disp_brightness(2, DP_TOP);
-	showText("BOOT", DP_TOP);
 	__asm__ ("rim");
 
 	beeper_on();
@@ -91,9 +89,9 @@ void main(void) {
 		{
 			load_disable();
 			//TODO: Generalize error handler
-			showText("SYST", DP_TOP);
-			showText("ERR", DP_BOT);
-			continue;  // do not perform any other actions.
+			// showText("SYST", DP_TOP);
+			// showText("ERR", DP_BOT);
+			// continue;  // do not perform any other actions.
 		}
 		if (systick_flag & SYSTICK_COUNT) {
 			fan_timer();
@@ -103,6 +101,7 @@ void main(void) {
 		}
 
 		/////////////////////// TODO: OLD code
+#if 0
 		uint32_t start_time;
 		showMenu();
 		load_disable();
@@ -176,6 +175,7 @@ void main(void) {
 		}
 		run_pressed = 0;
 		disp_write(digits[3], 0, DP_BOT);
+		#endif
 	}
 }
 

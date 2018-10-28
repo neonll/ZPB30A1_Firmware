@@ -13,9 +13,9 @@ void systick_init()
 	TIM2->ARRH   = SYSTICK_RELOAD >> 8;
 	TIM2->ARRL   = SYSTICK_RELOAD & 0xff;
 	TIM2->IER    = TIM2_IER_UIE;
-	TIM2->CR1   |= TIM2_CR1_CEN;
+	TIM2->CR1    = TIM2_CR1_CEN;
 }
-
+//TODO: IRQ priorities
 void TIM2_UPD_OVF_Handler() __interrupt(13)
 {
 	if (systick_flag & SYSTICK_COUNT) {

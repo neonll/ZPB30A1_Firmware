@@ -9,6 +9,9 @@
 #define BAUDR 115200L
 
 #define F_DISPLAY_REDRAW 2
+#define F_DISPLAY_BLINK_SLOW 3
+#define F_DISPLAY_BLINK_FAST 15
+
 #define F_POWER_CALC 1
 #define F_FAN 0.2
 
@@ -47,7 +50,7 @@
 
 
 #define GPIO_DISPLAY GPIOC
-#define DP_TOP PINC_SDA2
-#define DP_BOT PINC_SDA1
+#define DP_TOP_PIN PINC_SDA2
+#define DP_BOT_PIN PINC_SDA1
 
 #endif

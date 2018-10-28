@@ -5,25 +5,26 @@
 #include "load.h"
 #include "config.h"
 #include "settings.h"
+#include "stdio.h" //Debugging only
 #include "inc/stm8s_gpio.h"
+
+typedef enum {
+	/* Bitmask:
+	Bit 0: Brightness
+	Bit 1: Blink fast
+	Bit 2: Blink slow
+	Setting bit 1 and 2 at the same time results in undefinded behaviour.
+	*/
+	DISP_MODE_BRIGHT       = 0b000,
+	DISP_MODE_DIM          = 0b001,
+	DISP_MODE_BLINK_FAST   = 0b010,
+	DISP_MODE_BLINK_SLOW   = 0b100,
+} display_mode_t;
 
 volatile int8_t encoder_val = 0;
 volatile bool encoder_pressed = 0;
 volatile bool run_pressed = 0;
-uint8_t brightness[] = {0, 0};
-bool option_changed = 0;
-volatile bool redraw = 0;
-
-
-void ui_timer()
-{
-	static uint16_t timer = 0;
-	timer++;
-	if (timer == F_SYSTICK/F_DISPLAY_REDRAW) {
-		timer = 0;
-		redraw = 1;
-	}
-}
+static uint8_t display_mode[] = {DISP_MODE_BRIGHT, DISP_MODE_BRIGHT};
 
 
 char mode_units[][5] = {"AMPS",	"WATT",	"OHMS",	"VOLT"};
@@ -36,38 +37,81 @@ uint16_t max_values[NUM_MODES] = {
 	50000, // 50Ω
 	28000, // 28V
 };
+bool option_changed = 0;
+volatile bool redraw = 0;
 
-//TODO: Correctly handle bouncing encoder
-void GPIOB_Handler() __interrupt(4) {
-	static uint8_t _encoder_dir = 0xFF;
-	uint8_t cur = (GPIOB->IDR >> 4) & 3;
-	if (cur == 0) {
-		if (_encoder_dir == 2) {
-			encoder_val++;
-		} else if (_encoder_dir == 1) {
-			encoder_val--;
+static void ui_text(char text[], uint8_t display);
+static void ui_number(uint16_t num, uint8_t dot, uint8_t display);
+
+void ui_set_display_mode(display_mode_t mode, display_t disp)
+{
+	display_mode[disp] = mode;
+	if (mode & DISP_MODE_DIM) {
+		disp_brightness(BRIGHTNESS_DIM, disp);
+	} else {
+		disp_brightness(BRIGHTNESS_BRIGHT, disp);
+	}
+}
+
+void ui_init()
+{
+	ui_set_display_mode(DISP_MODE_BRIGHT, DP_TOP);
+	ui_set_display_mode(DISP_MODE_BRIGHT, DP_BOT);
+	ui_text("BOOT", DP_TOP);
+	ui_text("888", DP_BOT);
+}
+
+void ui_timer_redraw()
+{
+	static uint16_t timer = 0;
+	timer++;
+	if (timer == F_SYSTICK/F_DISPLAY_REDRAW) {
+		timer = 0;
+		redraw = 1;
+	}
+}
+
+void ui_blink(uint8_t mode)
+{
+	for (uint8_t i=0; i<2; i++)
+	{
+		if (display_mode[i] & mode) {
+			ui_set_display_mode(display_mode[i] ^ DISP_MODE_DIM, i);
 		}
 	}
-	_encoder_dir = cur;
 }
 
-void GPIOC_Handler() __interrupt(5) {
-	static uint8_t input_values = 0xFF;
-	input_values &= ~GPIOC->IDR; // store changes (H->L) for buttons
-	encoder_pressed = input_values & PINC_ENC_P;
-	run_pressed = input_values & PINC_RUN_P;
-	if (input_values & PINC_OL_DETECT) error = ERROR_OLP;
-	input_values = GPIOC->IDR;
+void ui_timer_blink()
+{
+	static uint16_t slow_timer = 0;
+	static uint16_t fast_timer = 0;
+	slow_timer++;
+	if (slow_timer == F_SYSTICK/F_DISPLAY_BLINK_SLOW) {
+		slow_timer = 0;
+		ui_blink(DISP_MODE_BLINK_SLOW);
+	}
+
+	fast_timer++;
+	if (fast_timer == F_SYSTICK/F_DISPLAY_BLINK_FAST) {
+		fast_timer = 0;
+		ui_blink(DISP_MODE_BLINK_FAST);
+	}
 }
 
-void showText(char text[], uint8_t display)
+void ui_timer()
+{
+	ui_timer_redraw();
+	ui_timer_blink();
+}
+
+void ui_text(char text[], uint8_t display)
 {
 	for (uint8_t i=0; i<4; i++) {
 		if (display == DP_TOP || i != 3) disp_char(i, text[i], 0, display);
 	}
 }
 
-void showNumber(uint16_t num, uint8_t dot, uint8_t display)
+void ui_number(uint16_t num, uint8_t dot, uint8_t display)
 {
 	uint16_t maximum = (display == DP_TOP)?10000:1000;
 	uint16_t digits = (display == DP_TOP)?4:3;
@@ -82,6 +126,7 @@ void showNumber(uint16_t num, uint8_t dot, uint8_t display)
 	}
 }
 
+#if 0
 //// TODO: Old code
 
 uint8_t select(char *opts, uint8_t num_opts, uint8_t selected)
@@ -97,16 +142,6 @@ uint8_t select(char *opts, uint8_t num_opts, uint8_t selected)
 			old_opt = selected;
 			encoder_val = 0;
 		}
-	}
-}
-
-void blinkDisplay(uint8_t disp)
-{
-	uint8_t dptop = disp == DP_TOP;
-	//TODO: Cleanup
-	if (brightness[dptop] != ((systick >> 5) & 1)) {
-		brightness[dptop] = !brightness[dptop];
-		disp_brightness(1 + brightness[dptop], disp);
 	}
 }
 
@@ -153,7 +188,7 @@ uint16_t change_u16(uint16_t var, uint16_t max, uint16_t inc)
 void selectMode(void)
 {
 	while (1) {
-		blinkDisplay(DP_BOT);
+		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
 		settings.mode = change_u8(settings.mode, 2);		//CV mode not supported yet
 		if (option_changed) {
 			option_changed = 0;
@@ -170,7 +205,7 @@ void selectMode(void)
 bool selectBool(bool val)
 {
 	while (1) {
-		blinkDisplay(DP_BOT);
+		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
 		if (encoder_val) {
 			val = !val;
 			encoder_val = 0;
@@ -188,7 +223,7 @@ uint16_t selectUInt16(uint16_t val, uint16_t max)
 	uint16_t inc = 10;
 	option_changed = 1;
 	while (1) {
-		blinkDisplay(DP_BOT);
+		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
 		if (encoder_pressed) {
 			encoder_pressed = 0;
 			if (!hl_opt) {
@@ -230,7 +265,7 @@ void selectValue(void)
 	showText(opts[settings.mode], DP_TOP);
 	disp_write(digits[3], LED_HIGH, DP_BOT);
 	while (1) {
-		blinkDisplay(DP_BOT);
+		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
 		if (encoder_pressed) {
 			encoder_pressed = 0;
 			if (!hl_opt) {
@@ -271,7 +306,7 @@ void selectCutoff(void) {
 	option_changed = 1;
 	disp_write(digits[3], LED_HIGH, DP_BOT);
 	while (1) {
-		blinkDisplay(DP_BOT);
+		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
 		if (encoder_pressed) {
 			encoder_pressed = 0;
 			if (!hl_opt) {
@@ -315,7 +350,7 @@ void showMenu()
 				}
 			}
 		}
-		blinkDisplay(DP_TOP);
+		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
 		if (opt != old_opt) {
 			showText(opts[opt], DP_TOP);
 			switch (opt) {
@@ -371,4 +406,28 @@ void showMenu()
 			return;
 		}
 	}
+}
+#endif
+
+//TODO: Correctly handle bouncing encoder
+void GPIOB_Handler() __interrupt(4) {
+	static uint8_t _encoder_dir = 0xFF;
+	uint8_t cur = (GPIOB->IDR >> 4) & 3;
+	if (cur == 0) {
+		if (_encoder_dir == 2) {
+			encoder_val++;
+		} else if (_encoder_dir == 1) {
+			encoder_val--;
+		}
+	}
+	_encoder_dir = cur;
+}
+
+void GPIOC_Handler() __interrupt(5) {
+	static uint8_t input_values = 0xFF;
+	input_values &= ~GPIOC->IDR; // store changes (H->L) for buttons
+	encoder_pressed = input_values & PINC_ENC_P;
+	run_pressed = input_values & PINC_RUN_P;
+	if (input_values & PINC_OL_DETECT) error = ERROR_OLP;
+	input_values = GPIOC->IDR;
 }

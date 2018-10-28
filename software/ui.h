@@ -3,12 +3,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+void ui_init();
 void ui_timer();
 
-
 void showMenu();
-void showText(char text[], uint8_t display);
-void showNumber(uint16_t num, uint8_t dot, uint8_t display);
+
 
 extern volatile int8_t encoder_val;
 extern volatile bool encoder_pressed;

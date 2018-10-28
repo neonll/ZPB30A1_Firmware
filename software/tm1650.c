@@ -60,7 +60,7 @@ uint8_t chars[] = {
 	0x40, // -
 };
 
-void i2c_write(uint8_t data, uint8_t pin)
+static void i2c_write(uint8_t data, uint8_t pin)
 {
 	uint8_t i;
 	GPIO_DISPLAY->DDR |= pin;
@@ -81,6 +81,7 @@ void i2c_write(uint8_t data, uint8_t pin)
 
 void disp_write(uint8_t addr, uint8_t data, uint8_t pin)
 {
+	pin = (pin == DP_TOP)?DP_TOP_PIN:DP_BOT_PIN;
 	// Start sequence
 	GPIO_DISPLAY->ODR |= pin;         // SDA HIGH
 	GPIO_DISPLAY->ODR |= PIN_I2C_CLK;  // SCL HIGH

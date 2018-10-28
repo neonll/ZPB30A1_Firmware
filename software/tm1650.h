@@ -14,8 +14,15 @@ extern uint8_t chars[];
 #define LED_HIGH    0x20
 #define LED_LOW     0x40
 
-//TODO: Make this function private
-void disp_write(uint8_t addr, uint8_t data, uint8_t pin);
+typedef enum {
+    BRIGHTNESS_BRIGHT = 5,
+    BRIGHTNESS_DIM = 3
+} brightness_t;
+
+typedef enum {
+    DP_TOP,
+    DP_BOT
+} display_t;
 
 void disp_char(uint8_t position, uint8_t c, uint8_t dot, uint8_t pin);
 void disp_brightness(uint8_t brightness, uint8_t pin);

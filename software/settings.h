@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-
 typedef enum {
 	MODE_CC,
 	MODE_CW,
