@@ -77,8 +77,8 @@ void main(void) {
 	fan_init();
 	settings_init();
 
-	setBrightness(2, DP_BOT);
-	setBrightness(2, DP_TOP);
+	disp_brightness(2, DP_BOT);
+	disp_brightness(2, DP_TOP);
 	showText("BOOT", DP_TOP);
 	__asm__ ("rim");
 

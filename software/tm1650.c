@@ -3,7 +3,8 @@
 #include "inc/stm8s_gpio.h"
 
 #define PIN_I2C_CLK PINC_SCL
-#define I2C_DELAY 0
+#define DIGIT_REG 0x68
+#define BRIGHTNESS_REG 0x48
 
 uint8_t digits[] = {
 	0x68,
@@ -23,6 +24,12 @@ uint8_t chars[] = {
 	0x07, // 7
 	0x7F, // 8
 	0x6F, // 9
+	0x00, // :
+	0x00, // ;
+	0x00, // <
+	0x00, // =
+	0x00, // >
+	0x00, // ?
 	0x00, // @ as SPACE
 	0x77, // A
 	0x7C, // b
@@ -89,8 +96,13 @@ void disp_write(uint8_t addr, uint8_t data, uint8_t pin)
 	GPIO_DISPLAY->ODR |= pin;         // SDA HIGH
 }
 
-void setBrightness(uint8_t brightness, uint8_t pin)
+void disp_char(uint8_t position, uint8_t c, uint8_t dot, uint8_t pin)
+{
+	disp_write(DIGIT_REG + 2*position, chars[c - CHAR_OFFSET] | (dot?0x80:0), pin);
+}
+
+void disp_brightness(uint8_t brightness, uint8_t pin)
 {
 	if (!brightness) disp_write(0x48, 0x00, pin); // OFF
-	else disp_write(0x48, ((brightness & 7) << 4) | 0x01, pin); // 8 brightness levels
+	else disp_write(BRIGHTNESS_REG, ((brightness & 7) << 4) | 0x01, pin); // 8 brightness levels
 }

@@ -25,27 +25,21 @@ void ui_timer()
 	}
 }
 
-//// TODO: Old code
 
-char mode_units[][5] = {
-	"AMPS",
-	"WATT",
-	"OHMS",
-	"VOLT"
-};
-
+char mode_units[][5] = {"AMPS",	"WATT",	"OHMS",	"VOLT"};
 char mode_text[][4] = {"CC@","CW@","CR@","CV@"};
 char on_off_text[][4] = {"OFF","ON@"};
 
-uint16_t max_values[4] = {
+uint16_t max_values[NUM_MODES] = {
 	10000, // 10A
 	60000, // 60W
 	50000, // 50Ω
 	28000, // 28V
 };
 
-uint8_t _encoder_dir = 0xFF;
+//TODO: Correctly handle bouncing encoder
 void GPIOB_Handler() __interrupt(4) {
+	static uint8_t _encoder_dir = 0xFF;
 	uint8_t cur = (GPIOB->IDR >> 4) & 3;
 	if (cur == 0) {
 		if (_encoder_dir == 2) {
@@ -57,46 +51,38 @@ void GPIOB_Handler() __interrupt(4) {
 	_encoder_dir = cur;
 }
 
-uint8_t input_values = 0xFF;
 void GPIOC_Handler() __interrupt(5) {
+	static uint8_t input_values = 0xFF;
 	input_values &= ~GPIOC->IDR; // store changes (H->L) for buttons
-	encoder_pressed |= (input_values >> 3) & 1; // Set flag, that the button was pressed
-	run_pressed     |= (input_values >> 4) & 1; // Set flag, that the button was pressed
-	if((input_values >> 2) & 1 == 1) error = ERROR_OLP; // OverLoad pro
+	encoder_pressed = input_values & PINC_ENC_P;
+	run_pressed = input_values & PINC_RUN_P;
+	if (input_values & PINC_OL_DETECT) error = ERROR_OLP;
 	input_values = GPIOC->IDR;
 }
 
 void showText(char text[], uint8_t display)
 {
-	disp_write(digits[0], chars[text[0] - CHAR_OFFSET], display);
-	disp_write(digits[1], chars[text[1] - CHAR_OFFSET], display);
-	disp_write(digits[2], chars[text[2] - CHAR_OFFSET], display);
-	if (display == DP_TOP) {
-		disp_write(digits[3], chars[text[3] - CHAR_OFFSET], display);
+	for (uint8_t i=0; i<4; i++) {
+		if (display == DP_TOP || i != 3) disp_char(i, text[i], 0, display);
 	}
 }
 
 void showNumber(uint16_t num, uint8_t dot, uint8_t display)
 {
-	while (num >= 10000) {
+	uint16_t maximum = (display == DP_TOP)?10000:1000;
+	uint16_t digits = (display == DP_TOP)?4:3;
+	while (num >= maximum) {
 		num /= 10;
 		dot--;
 	}
-	if (display == DP_TOP) {
-		disp_write(digits[0], chars[num / 1000] | (0x80 & (0x10 << dot)), DP_TOP);
-		disp_write(digits[1], chars[(num / 100) % 10] | (0x80 & (0x20 << dot)), DP_TOP);
-		disp_write(digits[2], chars[(num / 10) % 10] | (0x80 & (0x40 << dot)), DP_TOP);
-		disp_write(digits[3], chars[num % 10], DP_TOP);
-	} else {
-		if (num >= 1000) {
-			num /= 10;
-			dot--;
-		}
-		disp_write(digits[0], chars[(num / 100) % 10] | (0x80 & (0x20 << dot)), DP_BOT);
-		disp_write(digits[1], chars[(num / 10) % 10] | (0x80 & (0x40 << dot)), DP_BOT);
-		disp_write(digits[2], chars[num % 10], DP_BOT);
+	for (int8_t i=digits-1; i>=0; i--)
+	{
+		disp_char(i, num % 10 + '0', dot==(digits-1-i), display);
+		num /= 10;
 	}
 }
+
+//// TODO: Old code
 
 uint8_t select(char *opts, uint8_t num_opts, uint8_t selected)
 {
@@ -120,7 +106,7 @@ void blinkDisplay(uint8_t disp)
 	//TODO: Cleanup
 	if (brightness[dptop] != ((systick >> 5) & 1)) {
 		brightness[dptop] = !brightness[dptop];
-		setBrightness(1 + brightness[dptop], disp);
+		disp_brightness(1 + brightness[dptop], disp);
 	}
 }
 
@@ -354,7 +340,7 @@ void showMenu()
 		}
 		if (encoder_pressed) {
 			encoder_pressed = 0;
-			setBrightness(2, DP_TOP);
+			disp_brightness(2, DP_TOP);
 			switch (opt) {
 				case 0:
 					selectMode();
@@ -374,7 +360,7 @@ void showMenu()
 					break;
 			}
 			settings_update();
-			setBrightness(2, DP_BOT);
+			disp_brightness(2, DP_BOT);
 			disp_write(digits[3], 0, DP_BOT);
 			encoder_pressed = 0;
 			run_pressed = 0;

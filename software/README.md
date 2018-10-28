@@ -5,3 +5,9 @@
     handler. Should return as fast as possible!
 * NAME_handler(): Called from the main loop. Used for functions which should
     be called as fast as possible.
+
+# Timers
+* TIM1: CCR1: I-set
+* TIM2: Systick
+* TIM3: CCR2: Fan
+* TIM4:
