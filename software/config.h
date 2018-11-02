@@ -52,5 +52,11 @@
 #define GPIO_DISPLAY GPIOC
 #define DP_TOP_PIN PINC_SDA2
 #define DP_BOT_PIN PINC_SDA1
-
+#define LED_V       0x01
+#define LED_AH      0x02
+#define LED_WH      0x04
+#define LED_A       0x08
+#define LED_RUN     0x10
+#define LED_DIGIT1  0x20
+#define LED_DIGIT2  0x40
 #endif

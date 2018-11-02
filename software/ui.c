@@ -5,6 +5,9 @@
 #include "load.h"
 #include "config.h"
 #include "settings.h"
+#include "menu_items.h"
+#include "beeper.h"
+#include "utils.h"
 #include "stdio.h" //Debugging only
 #include "inc/stm8s_gpio.h"
 
@@ -21,27 +24,38 @@ typedef enum {
 	DISP_MODE_BLINK_SLOW   = 0b100,
 } display_mode_t;
 
+typedef enum {
+	EVENT_BITMASK_MENU 			= 0b11,
+	EVENT_ENTER 				= 0b10,
+	EVENT_RETURN				= 0b11,
+	EVENT_BITMASK_ENCODER 		= 0b11100,
+	EVENT_ENCODER_UP 			= 0b10000,
+	EVENT_ENCODER_DOWN 			= 0b10100,
+	EVENT_ENCODER_BUTTON		= 0b11000,
+	EVENT_RUN_BUTTON			= 0b11100,
+	EVENT_TIMER					= 0b100000,
+	EVENT_PREVIEW 				= 0b1000000,
+} ui_event_t;
+
 volatile int8_t encoder_val = 0;
 volatile bool encoder_pressed = 0;
 volatile bool run_pressed = 0;
 static uint8_t display_mode[] = {DISP_MODE_BRIGHT, DISP_MODE_BRIGHT};
+#define MENU_STACK_DEPTH 5
+const MenuItem *menu_stack[MENU_STACK_DEPTH];
+uint8_t menu_subitem_index[MENU_STACK_DEPTH];
+uint8_t menu_stack_head = 0;
+#define current_item menu_stack[menu_stack_head]
+#define current_subitem_index menu_subitem_index[menu_stack_head]
+#define current_subitem current_item->subitems[current_subitem_index]
 
 
 char mode_units[][5] = {"AMPS",	"WATT",	"OHMS",	"VOLT"};
-char mode_text[][4] = {"CC@","CW@","CR@","CV@"};
-char on_off_text[][4] = {"OFF","ON@"};
-
-uint16_t max_values[NUM_MODES] = {
-	10000, // 10A
-	60000, // 60W
-	50000, // 50Ω
-	28000, // 28V
-};
-bool option_changed = 0;
-volatile bool redraw = 0;
+char on_off_text[][4] = {"OFF","ON "};
 
 static void ui_text(char text[], uint8_t display);
 static void ui_number(uint16_t num, uint8_t dot, uint8_t display);
+static void ui_push_item(MenuItem *item);
 
 void ui_set_display_mode(display_mode_t mode, display_t disp)
 {
@@ -59,6 +73,8 @@ void ui_init()
 	ui_set_display_mode(DISP_MODE_BRIGHT, DP_BOT);
 	ui_text("BOOT", DP_TOP);
 	ui_text("888", DP_BOT);
+	menu_stack_head = 0;
+	ui_push_item(&menu_main);
 }
 
 void ui_timer_redraw()
@@ -67,7 +83,6 @@ void ui_timer_redraw()
 	timer++;
 	if (timer == F_SYSTICK/F_DISPLAY_REDRAW) {
 		timer = 0;
-		redraw = 1;
 	}
 }
 
@@ -102,9 +117,29 @@ void ui_timer()
 {
 	ui_timer_redraw();
 	ui_timer_blink();
+	if (encoder_val) {
+		beeper_on();
+		_delay_us(30);
+		beeper_off();
+	}
+	if (encoder_val > 0) {
+		current_item->handler(EVENT_ENCODER_UP, current_item);
+	}
+	if (encoder_val < 0) {
+		current_item->handler(EVENT_ENCODER_DOWN, current_item);
+	}
+	if (encoder_pressed) {
+		current_item->handler(EVENT_ENCODER_BUTTON, current_item);
+	}
+	if (run_pressed) {
+		current_item->handler(EVENT_RUN_BUTTON, current_item);
+	}
+	encoder_val = 0;
+	run_pressed = 0;
+	encoder_pressed = 0;
 }
 
-void ui_text(char text[], uint8_t display)
+void ui_text(char *text, uint8_t display)
 {
 	for (uint8_t i=0; i<4; i++) {
 		if (display == DP_TOP || i != 3) disp_char(i, text[i], 0, display);
@@ -126,288 +161,205 @@ void ui_number(uint16_t num, uint8_t dot, uint8_t display)
 	}
 }
 
-#if 0
-//// TODO: Old code
-
-uint8_t select(char *opts, uint8_t num_opts, uint8_t selected)
+uint8_t ui_num_subitem(const MenuItem *item)
 {
-	uint8_t old_opt = 0;		//was -1
-	while (1) {
-		if(encoder_val < 0){if(!selected){selected=num_opts;}selected--;}
-		else {if(encoder_val > 0){selected++;if(selected == num_opts)selected=0;}}
-		if (selected != old_opt) {
-			disp_write(digits[0], chars[*(opts + selected * 3 + 0) - CHAR_OFFSET], DP_BOT);
-			disp_write(digits[1], chars[*(opts + selected * 3 + 1) - CHAR_OFFSET], DP_BOT);
-			disp_write(digits[2], chars[*(opts + selected * 3 + 2) - CHAR_OFFSET], DP_BOT);
-			old_opt = selected;
-			encoder_val = 0;
-		}
-	}
+	uint8_t max_ = 0;
+	const MenuItem **p = item->subitems;
+	while (*p++) max_++;
+	return max_;
 }
 
-uint8_t change_u8(uint8_t var, uint8_t max)
+
+// Menu item handlers
+static void ui_push_item(const MenuItem *item)
 {
-	if (encoder_val < 0) {
-		option_changed = 1;
-		if (var) {
-			return var - 1;
+	if (menu_stack_head != 0 || menu_stack[0] != 0) {
+		menu_stack_head++; //First push is for the main menu
+	}
+	current_item = item;
+	current_subitem_index = 0;
+	item->handler(EVENT_ENTER, item);
+}
+
+void ui_pop_item()
+{
+	if (menu_stack_head != 0) {
+		menu_stack_head--;
+	}
+	disp_leds(0);
+	settings_update(); //Store change value to eeprom
+	current_item->handler(EVENT_RETURN, current_item);
+}
+
+/* This function must only be called for the currently active item. */
+void ui_handle_subitems(uint8_t event, const MenuItem *item)
+{
+	if (event == EVENT_ENCODER_UP) {
+		if (current_subitem_index < ui_num_subitem(item) - 1) {
+			current_subitem_index++;
 		} else {
-			return max;
+			current_subitem_index = 0;
 		}
-	} else if (encoder_val > 0) {
-		option_changed = 1;
-		if (var < max) {
-			return var + 1;
+	}
+	if (event == EVENT_ENCODER_DOWN) {
+		if (current_subitem_index > 0) {
+			current_subitem_index--;
 		} else {
-			return 0;
+			current_subitem_index = ui_num_subitem(item) - 1;
 		}
 	}
-	return var;
 }
 
-uint16_t change_u16(uint16_t var, uint16_t max, uint16_t inc)
+void ui_select(uint8_t event, const MenuItem *item, uint8_t display)
 {
-	if (encoder_val < 0) {
-		option_changed = 1;
-		if (var > inc) {
-			return var - inc;
+	uint8_t display2 = display==DP_TOP?DP_BOT:DP_TOP;
+	bool output = event & (EVENT_BITMASK_MENU | EVENT_BITMASK_ENCODER);
+	if (event & EVENT_BITMASK_MENU) {
+		ui_set_display_mode(DISP_MODE_BLINK_FAST, display);
+		ui_set_display_mode(DISP_MODE_DIM, display2);
+	}
+	ui_handle_subitems(event, item);
+	if (output) {
+		ui_text(current_subitem->caption, display);
+	}
+	if (event == EVENT_RUN_BUTTON) {
+		ui_pop_item();
+	}
+}
+
+
+/** Allows selecting a menu item in the top display.
+    The child handler is called to update the bottom display. */
+void ui_submenu(uint8_t event, const MenuItem *item)
+{
+	if (event & EVENT_PREVIEW) {
+		// Show nothing in bottom display as preview
+		ui_text("   ", DP_BOT);
+		return;
+	}
+
+	ui_select(event, item, DP_TOP);
+	if (current_subitem->handler) {
+		current_subitem->handler(event | EVENT_PREVIEW, current_subitem);
+	} else {
+		ui_text("===", DP_BOT); //Show warning that no handler is defined (makes no sense for ui_submenu!)
+	}
+	if (event == EVENT_ENCODER_BUTTON) {
+		ui_push_item(current_subitem);
+	}
+}
+
+uint8_t ui_find_active_subitem(const MenuItem *item)
+{
+	uint8_t n = ui_num_subitem(item);
+	uint8_t value = *((uint8_t*)item->data);
+	for (uint8_t i=0; i<n; i++) {
+		if (item->subitems[i]->value == value) {
+			return i;
+		}
+	}
+	// Item not found => use first subitem as default value!
+	return 0;
+}
+
+/** Allows selecting an item in the bottom menu.
+    If the child element has an event handler it is called on selection.
+	Otherwise the parent's data element is expected to point to a uint8_t
+	variable which is set to the child's data element. */
+void ui_select_item(uint8_t event, const MenuItem *item)
+{
+	if (event & EVENT_PREVIEW) {
+		// Show selected value in bottom display as preview
+		ui_text(item->subitems[ui_find_active_subitem(item)]->caption, DP_BOT);
+		return;
+	}
+	if (event == EVENT_ENTER) {
+		current_subitem_index = ui_find_active_subitem(item);
+	}
+	ui_select(event, item, DP_BOT);
+
+	if (event == EVENT_ENCODER_BUTTON) {
+		/* If a handler is available use it to set the value. */
+		if (current_subitem->handler) {
+			current_subitem->handler(EVENT_ENTER, current_subitem);
 		} else {
-			return 0;
+			/* No handler => just set the value ourselves. */
+			uint8_t *p = (uint8_t*)item->data;
+			*p = current_subitem->value;
+			ui_pop_item();
 		}
-	} else if (encoder_val > 0) {
-		option_changed = 1;
-		if (var + inc < max) {
-			return var + inc;
+	}
+}
+
+//TODO: Change step size depeding on encoder speed
+void ui_edit_value(uint8_t event, const MenuItem *item)
+{
+	static uint16_t value;
+	const NumericEdit *edit = item->data;
+	uint8_t display = DP_BOT, display2 = DP_TOP;
+	if (event & EVENT_PREVIEW) {
+		ui_number(*edit->var, edit->dot_offset, display);
+		return;
+	}
+
+	uint16_t inc;
+	if (value >= 10000) {
+		inc = 100;
+	} else if (value >= 1000) {
+		inc = 10;
+	} else {
+		inc = 1;
+	}
+	if (current_subitem_index == 0) {
+		inc *= 10;
+	}
+
+	bool pop = false;
+
+	switch (event) {
+	case EVENT_ENTER:
+		ui_set_display_mode(DISP_MODE_BRIGHT, display);
+		ui_set_display_mode(DISP_MODE_DIM, display2);
+		disp_leds(item->value | LED_DIGIT1);
+		value = *edit->var;
+		current_subitem_index = 0;
+		break;
+	case EVENT_RUN_BUTTON:
+		pop = true;
+		break;
+	case EVENT_ENCODER_BUTTON:
+		if (current_subitem_index == 0) {
+			current_subitem_index = 1;
+			disp_leds(item->value | LED_DIGIT2);
 		} else {
-			return max;
+			*edit->var = value;
+			pop = true;
 		}
-	}
-	return var;
-}
-
-void selectMode(void)
-{
-	while (1) {
-		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
-		settings.mode = change_u8(settings.mode, 2);		//CV mode not supported yet
-		if (option_changed) {
-			option_changed = 0;
-			encoder_val = 0;
-			showText(mode_text[settings.mode], DP_BOT);
-		}
-		if (encoder_pressed) {
-			settings_update();
-			return;
-		}
-	}
-}
-
-bool selectBool(bool val)
-{
-	while (1) {
-		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
-		if (encoder_val) {
-			val = !val;
-			encoder_val = 0;
-			showText(on_off_text[val], DP_BOT);
-		}
-		if (encoder_pressed) {
-			return val;
-		}
-	}
-}
-
-uint16_t selectUInt16(uint16_t val, uint16_t max)
-{
-	bool hl_opt = 0;
-	uint16_t inc = 10;
-	option_changed = 1;
-	while (1) {
-		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
-		if (encoder_pressed) {
-			encoder_pressed = 0;
-			if (!hl_opt) {
-				hl_opt = 1;
-				option_changed = 1;
-				disp_write(digits[3], LED_LOW, DP_BOT);
-			} else {
-				return val;
-			}
-		}
-		if (option_changed) {
-			option_changed = 0;
-			encoder_val = 0;
-			showNumber(val, 3, DP_BOT);
-
-			if (settings.setpoints[settings.mode] >= 10000) {
-				inc = 100;
-			} else if (settings.setpoints[settings.mode] >= 1000) {
-				inc = 10;
-			} else {
-				inc = 1;
-			}
-			if (!hl_opt) {
-				inc *= 10;
-			}
-		}
-		val = change_u16(val, max, inc);
-
-	}
-}
-
-void selectValue(void)
-{
-	bool change = 0;
-	bool hl_opt = 0;
-	uint16_t inc = 10;
-	option_changed = 1;
-	char opts[][5] = {"MODE", "VAL@", "SHDN", "CUTO", "BEEP"};
-	showText(opts[settings.mode], DP_TOP);
-	disp_write(digits[3], LED_HIGH, DP_BOT);
-	while (1) {
-		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
-		if (encoder_pressed) {
-			encoder_pressed = 0;
-			if (!hl_opt) {
-				hl_opt = 1;
-				option_changed = 1;
-				disp_write(digits[3], LED_LOW, DP_BOT);
-			} else {
-				settings_update();
-				return;
-			}
-		}
-		if (option_changed) {
-			option_changed = 0;
-			encoder_val = 0;
-			showNumber(settings.setpoints[settings.mode], 3, DP_BOT);
-
-			/*if (settings.setpoints[settings.mode] >= 100000) {
-				inc = 1000;
-			} else */if (settings.setpoints[settings.mode] >= 10000) {
-				inc = 100;
-			} else if (settings.setpoints[settings.mode] >= 1000) {
-				inc = 10;
-			} else {
-				inc = 1;
-			}
-			if (!hl_opt) {
-				inc *= 10;
-			}
-		}
-		settings.setpoints[settings.mode] = change_u16(settings.setpoints[settings.mode], 10000, inc);
-	}
-}
-
-void selectCutoff(void) {
-	bool change = 0;
-	bool hl_opt = 0;
-	uint16_t inc = 10;
-	option_changed = 1;
-	disp_write(digits[3], LED_HIGH, DP_BOT);
-	while (1) {
-		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
-		if (encoder_pressed) {
-			encoder_pressed = 0;
-			if (!hl_opt) {
-				hl_opt = 1;
-				option_changed = 1;
-				disp_write(digits[3], LED_LOW, DP_BOT);
-			} else {
-				settings_update();
-				return;
-			}
-		}
-		if (option_changed) {
-			option_changed = 0;
-			encoder_val = 0;
-			showNumber(settings.cutoff_voltage / 10, 1, DP_BOT);
-		}
-		settings.cutoff_voltage = change_u16(settings.cutoff_voltage, 2900, hl_opt ? 10 : 100);
-	}
-}
-
-void showMenu()
-{
-	uint8_t old_opt = 255, opt = 0;
-	char opts[][5] = {"MODE", "VAL@", "SHDN", "CUTO", "BEEP"};
-
-	//char *opts = "MODEVAL@SHDNCUTOBEEP";
-	//select(opts, 5, 0);
-	while (1) {
-		if (encoder_val < 0) {
-			if (opt) {
-				opt--;
-			} else {
-				opt = 4;
-			}
+		break;
+	case EVENT_ENCODER_UP:
+		if (value < edit->max - inc) {
+			 value += inc;
+		 } else {
+			 value = edit->max;
+		 }
+		break;
+	case EVENT_ENCODER_DOWN:
+		if (value > edit->min + inc) {
+			value -= inc;
 		} else {
-			if (encoder_val > 0) {
-				if (opt < 4) {
-					opt++;
-				} else {
-					opt = 0;
-				}
-			}
+			value = edit->min;
 		}
-		ui_set_display_mode(DISP_MODE_BLINK_FAST, DP_BOT);
-		if (opt != old_opt) {
-			showText(opts[opt], DP_TOP);
-			switch (opt) {
-				case 0:
-					showText(mode_text[(uint8_t)settings.mode], DP_BOT);
-					break;
-				case 1:
-					showNumber(settings.setpoints[(uint8_t)settings.mode], 3, DP_BOT);
-					break;
-				case 2:
-					showText(on_off_text[settings.cutoff_enabled], DP_BOT);
-					break;
-				case 3:
-					showNumber(settings.cutoff_voltage, 2, DP_BOT);
-					break;
-				case 4:
-					showText(on_off_text[settings.beeper_enabled], DP_BOT);
-					break;
-			}
-			old_opt = opt;
-			encoder_val = 0;
-		}
-		if (encoder_pressed) {
-			encoder_pressed = 0;
-			disp_brightness(2, DP_TOP);
-			switch (opt) {
-				case 0:
-					selectMode();
-					break;
-				case 1:
-					showText(mode_units[settings.mode], DP_TOP);
-					settings.setpoints[settings.mode] = selectUInt16(settings.setpoints[settings.mode], max_values[settings.mode]);
-					break;
-				case 2:
-					settings.cutoff_enabled = selectBool(settings.cutoff_enabled);
-					break;
-				case 3:
-					selectCutoff();
-					break;
-				case 4:
-					settings.beeper_enabled = selectBool(settings.beeper_enabled);
-					break;
-			}
-			settings_update();
-			disp_brightness(2, DP_BOT);
-			disp_write(digits[3], 0, DP_BOT);
-			encoder_pressed = 0;
-			run_pressed = 0;
-			old_opt = 255;
-		}
-		if (run_pressed) {
-			run_pressed = 0;
-			return;
-		}
+		break;
+	}
+	bool output = !pop && event & (EVENT_BITMASK_MENU | EVENT_BITMASK_ENCODER);
+	if (output) {
+		ui_number(value, edit->dot_offset, display);
+	}
+	if (pop) {
+		// Pop must be the last action to avoid overwriting the display
+		ui_pop_item();
 	}
 }
-#endif
 
 //TODO: Correctly handle bouncing encoder
 void GPIOB_Handler() __interrupt(4) {
@@ -426,8 +378,8 @@ void GPIOB_Handler() __interrupt(4) {
 void GPIOC_Handler() __interrupt(5) {
 	static uint8_t input_values = 0xFF;
 	input_values &= ~GPIOC->IDR; // store changes (H->L) for buttons
-	encoder_pressed = input_values & PINC_ENC_P;
-	run_pressed = input_values & PINC_RUN_P;
+	encoder_pressed |= input_values & PINC_ENC_P;
+	run_pressed |= input_values & PINC_RUN_P;
 	if (input_values & PINC_OL_DETECT) error = ERROR_OLP;
 	input_values = GPIOC->IDR;
 }

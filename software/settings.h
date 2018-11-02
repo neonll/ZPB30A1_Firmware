@@ -13,10 +13,10 @@ typedef enum {
 
 typedef struct {
 	sink_mode_t mode;
-	uint16_t setpoints[NUM_MODES]; // CC/CW/CR/CV
+	uint16_t setpoints[NUM_MODES]; // CC (mA)/CW(mW)/CR/CV(mV)
 	bool beeper_enabled;
 	bool cutoff_enabled;
-	uint16_t cutoff_voltage;
+	uint16_t cutoff_voltage; //mV
 } settings_t;
 
 extern settings_t settings;

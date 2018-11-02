@@ -13,6 +13,8 @@ uint8_t digits[] = {
 	0x6E
 };
 
+#define CHAR_OFFSET 48
+
 uint8_t chars[] = {
 	0x3F, // 0
 	0x06, // 1
@@ -27,7 +29,7 @@ uint8_t chars[] = {
 	0x00, // :
 	0x00, // ;
 	0x00, // <
-	0x00, // =
+	0x40, // =
 	0x00, // >
 	0x00, // ?
 	0x00, // @ as SPACE
@@ -99,6 +101,9 @@ void disp_write(uint8_t addr, uint8_t data, uint8_t pin)
 
 void disp_char(uint8_t position, uint8_t c, uint8_t dot, uint8_t pin)
 {
+	if (c == ' ') {
+		c = '@';
+	}
 	disp_write(DIGIT_REG + 2*position, chars[c - CHAR_OFFSET] | (dot?0x80:0), pin);
 }
 
@@ -106,4 +111,9 @@ void disp_brightness(uint8_t brightness, uint8_t pin)
 {
 	if (!brightness) disp_write(0x48, 0x00, pin); // OFF
 	else disp_write(BRIGHTNESS_REG, ((brightness & 7) << 4) | 0x01, pin); // 8 brightness levels
+}
+
+void disp_leds(uint8_t leds)
+{
+	disp_write(DIGIT_REG + 6, leds, DP_BOT);
 }
