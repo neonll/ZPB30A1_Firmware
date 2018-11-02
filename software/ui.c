@@ -292,10 +292,11 @@ void ui_select_item(uint8_t event, const MenuItem *item)
 }
 
 //TODO: Change step size depeding on encoder speed
-void ui_edit_value(uint8_t event, const MenuItem *item)
+/* Edit numeric values. This function encapsulates almost all the logic
+   except setting the secondard display's value and selecting the LEDs. */
+void ui_edit_value_internal(uint8_t event, const NumericEdit *edit, uint8_t leds)
 {
 	static uint16_t value;
-	const NumericEdit *edit = item->data;
 	uint8_t display = DP_BOT, display2 = DP_TOP;
 	if (event & EVENT_PREVIEW) {
 		ui_number(*edit->var, edit->dot_offset, display);
@@ -320,7 +321,7 @@ void ui_edit_value(uint8_t event, const MenuItem *item)
 	case EVENT_ENTER:
 		ui_set_display_mode(DISP_MODE_BRIGHT, display);
 		ui_set_display_mode(DISP_MODE_DIM, display2);
-		disp_leds(item->value | LED_DIGIT1);
+		disp_leds(leds | LED_DIGIT1);
 		value = *edit->var;
 		current_subitem_index = 0;
 		break;
@@ -330,7 +331,7 @@ void ui_edit_value(uint8_t event, const MenuItem *item)
 	case EVENT_ENCODER_BUTTON:
 		if (current_subitem_index == 0) {
 			current_subitem_index = 1;
-			disp_leds(item->value | LED_DIGIT2);
+			disp_leds(leds | LED_DIGIT2);
 		} else {
 			*edit->var = value;
 			pop = true;
@@ -359,6 +360,41 @@ void ui_edit_value(uint8_t event, const MenuItem *item)
 		// Pop must be the last action to avoid overwriting the display
 		ui_pop_item();
 	}
+}
+
+void ui_edit_value(uint8_t event, const MenuItem *item)
+{
+	const NumericEdit *edit = item->data;
+	ui_edit_value_internal(event, edit, item->value);
+}
+
+void ui_edit_setpoint(uint8_t event, const MenuItem *item)
+{
+	const NumericEdit *edit = 0;
+	const char *label;
+	uint8_t leds = 0;
+	switch (settings.mode) {
+		case MODE_CC:
+			edit = &menu_value_edit_CC;
+			label = "AMP ";
+			leds = LED_A;
+			break;
+		case MODE_CV:
+			edit = &menu_value_edit_CV;
+			label = "VOLT";
+			leds = LED_V;
+			break;
+		case MODE_CR:
+			edit = &menu_value_edit_CR;
+			label = "OHM ";
+			break;
+		case MODE_CW:
+			edit = &menu_value_edit_CW;
+			label = "WATT";
+			break;
+	}
+	if (!(event & EVENT_PREVIEW)) ui_text(label, DP_TOP);
+	ui_edit_value_internal(event, edit, leds);
 }
 
 //TODO: Correctly handle bouncing encoder

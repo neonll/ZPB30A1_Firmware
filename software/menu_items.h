@@ -27,5 +27,9 @@ struct _NumericEdit {
 };
 
 extern const MenuItem menu_main;
+extern const NumericEdit menu_value_edit_CC;
+extern const NumericEdit menu_value_edit_CV;
+extern const NumericEdit menu_value_edit_CR;
+extern const NumericEdit menu_value_edit_CW;
 
 #endif

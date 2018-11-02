@@ -19,6 +19,15 @@
 #define F_BEEP_ERROR 2
 #define F_BEEP_KHZ 1 // 1, 2 or 4
 
+#define VOLT_MIN 1000 //mV
+#define VOLT_MAX 30000 //mV
+#define CUR_MIN 200 //mA
+#define CUR_MAX 10000 //mA
+#define POW_MIN 0 //mW
+#define POW_MAX 60000 //mW
+#define R_MIN 100 //mOhm
+#define R_MAX 60000 //mOhm
+
 #define ADC_OVERSAMPLING 2
 
 

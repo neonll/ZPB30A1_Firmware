@@ -59,17 +59,37 @@ static const MenuItem menu_mode_P = {
     .value = MODE_CW
 };
 
-static const NumericEdit menu_value_edit_CC = {
+const NumericEdit menu_value_edit_CC = {
     .var = &settings.setpoints[MODE_CC],
-    .min = 20, //mA
-    .max = 10000, //mA
+    .min = CUR_MIN,
+    .max = CUR_MAX,
+    .dot_offset = 3,
+};
+
+const NumericEdit menu_value_edit_CV = {
+    .var = &settings.setpoints[MODE_CV],
+    .min = VOLT_MIN,
+    .max = VOLT_MAX,
+    .dot_offset = 3,
+};
+
+const NumericEdit menu_value_edit_CR = {
+    .var = &settings.setpoints[MODE_CR],
+    .min = R_MIN,
+    .max = R_MAX,
+    .dot_offset = 3,
+};
+
+const NumericEdit menu_value_edit_CW = {
+    .var = &settings.setpoints[MODE_CW],
+    .min = POW_MIN,
+    .max = POW_MAX,
     .dot_offset = 3,
 };
 
 static const MenuItem menu_value = {
     .caption = "VAL ",
-    .data = &menu_value_edit_CC, //TODO
-    .handler = &ui_edit_value,
+    .handler = &ui_edit_setpoint,
 };
 
 static const MenuItem menu_beep = {
