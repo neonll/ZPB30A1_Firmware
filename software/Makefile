@@ -16,7 +16,7 @@ IHX=$(MAIN:%.c=$(BUILDDIR)/%.ihx)
 HEX=$(IHX:.ihx=.hex)
 DEP=$(REL:%.rel=%.d)
 
-.PHONY: all bin mkdir clean flash unlock
+.PHONY: all bin mkdir clean flash unlock clear_eeprom_unix clear_eeprom_windows
 
 all: bin
 
@@ -29,10 +29,12 @@ PROGRAMMER=ST-LINK
 endif
 flash: flash_windows
 unlock: unlock_windows
+clear_eeprom: clear_eeprom_windows
 else
 PROGRAMMER=stlinkv$(STLINK_VERSION)
 flash: flash_unix
 unlock: unlock_unix
+clear_eeprom: clear_eeprom_unix
 endif
 CFLAGS+=$(INCLUDES) -D $(DEFINES)
 
@@ -65,10 +67,10 @@ unlock_windows:
 	@echo "Unlocking is currently unsupported on windows"
 	false
 
-unlock_linux:
+unlock_uinx:
 	$(STM8FLASH) -c $(PROGRAMMER) -p $(PROCESSOR) -u # Works in stm8flash versions after git commit f3f547b4
 
-clear_eeprom_linux: empty_eeprom
+clear_eeprom_unix: empty_eeprom
 	$(STM8FLASH) -c $(PROGRAMMER) -p $(PROCESSOR) -s eeprom -w $<
 
 -include $(DEP)
