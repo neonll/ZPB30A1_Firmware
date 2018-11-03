@@ -71,7 +71,14 @@ selected unit.
     * ENAB: Enable/disable
     * CVAL: Cutoff value in Volt
 
-### Specifications
+### Error codes
+* OVP: Over voltage protection. Voltage connected to P+/P- is too high. (Note: This function can only warn about voltages which are slightly to high. Large voltages will destroy the electronic load!)
+* LOAD: The load can't maintain the set value. Usually this means that the source can't deliver enough current or the source's voltage is to low.
+* TEMP: Temperature is to high. Check if the fan is working and the thermistor is connected.
+* PWR: 12V input voltage is too low. Connect better power supply.
+* INT: Internal error. Should not happen. Check the source code where this error is set and try to fix it.
+
+## Specifications
 
 | Param           | Range    | Value
 | --------------- | -------- | ---

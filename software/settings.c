@@ -1,5 +1,6 @@
 #include "settings.h"
 #include "eeprom.h"
+#include "timer.h"
 settings_t settings;
 
 /* Note: The checksum is placed after the data so when the settings size grows
@@ -48,4 +49,10 @@ void settings_update()
     }
     uint8_t checksum = settings_calc_checksum(data, sizeof(settings));
     eeprom_write8(sizeof(settings), checksum);
+    /* TODO: Wrting the eeprom can take several 10s of milliseconds. This leads
+    to timer overflow errors. As eeprom writes only happen while the load is
+    inactive this should be no problem and we simply delete the error flags.
+    However in the future this write function could be split into smalller parts
+    */
+    systick_flag &= ~(SYSTICK_OVERFLOW|SYSTICK_COUNT);
 }

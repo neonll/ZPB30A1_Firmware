@@ -9,7 +9,7 @@ uint16_t set_current = 0;	// 0,001A
 volatile uint32_t mAmpere_seconds = 0;	//mAs
 volatile uint32_t mWatt_seconds = 0;	//mWs
 bool load_active = 0;
-
+error_t error = ERROR_NONE;
 
 void load_init()
 {
@@ -34,6 +34,12 @@ void load_disable()
     GPIOE->ODR &= ~PINE_ENABLE;
 }
 
+void load_enable()
+{
+    load_active = 1;
+    //TODO
+    // GPIOE->ODR &= ~PINE_ENABLE;
+}
 
 void load_timer()
 {

@@ -14,18 +14,6 @@
 #include "inc/stm8s_clk.h"
 #include "inc/stm8s_exti.h"
 
-#define MINUTE   60
-#define HOUR   3600
-
-error_t           error           = ERROR_NONE;
-char              error_msg[][5]  = {
-	"UVP@",
-	"OVP@",
-	"OLP@",
-	"OTP@",
-	"PWR@",
-};
-
 
 void clock_init()
 {
@@ -81,23 +69,21 @@ void main(void) {
 	__asm__ ("rim");
 
 	beeper_on();
-	delay10ms(20);
+	delay10ms(10);
 	beeper_off();
 	systick_flag = 0; // Clear any overflows up to this point
 	while (1) {
 		if (systick_flag & SYSTICK_OVERFLOW)
 		{
 			load_disable();
-			//TODO: Generalize error handler
-			// showText("SYST", DP_TOP);
-			// showText("ERR", DP_BOT);
-			// continue;  // do not perform any other actions.
+			error = ERROR_TIM;
+			systick_flag &= ~SYSTICK_OVERFLOW;
 		}
 		if (systick_flag & SYSTICK_COUNT) {
 			fan_timer();
 			ui_timer();
 			load_timer();
-			systick_flag &= ~ SYSTICK_COUNT;
+			systick_flag &= ~SYSTICK_COUNT;
 		}
 
 		/////////////////////// TODO: OLD code

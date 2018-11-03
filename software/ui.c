@@ -37,27 +37,26 @@ typedef enum {
 	EVENT_PREVIEW 				= 0b1000000,
 } ui_event_t;
 
-volatile int8_t encoder_val = 0;
-volatile bool encoder_pressed = 0;
-volatile bool run_pressed = 0;
+static volatile int8_t encoder_val = 0;
+static volatile bool encoder_pressed = 0;
+static volatile bool run_pressed = 0;
 static uint8_t display_mode[] = {DISP_MODE_BRIGHT, DISP_MODE_BRIGHT};
+
 #define MENU_STACK_DEPTH 5
-const MenuItem *menu_stack[MENU_STACK_DEPTH];
-uint8_t menu_subitem_index[MENU_STACK_DEPTH];
-uint8_t menu_stack_head = 0;
+static const MenuItem *menu_stack[MENU_STACK_DEPTH];
+static uint8_t menu_subitem_index[MENU_STACK_DEPTH];
+static uint8_t menu_stack_head = 0;
+
 #define current_item menu_stack[menu_stack_head]
 #define current_subitem_index menu_subitem_index[menu_stack_head]
 #define current_subitem current_item->subitems[current_subitem_index]
 
-
-char mode_units[][5] = {"AMPS",	"WATT",	"OHMS",	"VOLT"};
-char on_off_text[][4] = {"OFF","ON "};
-
 static void ui_text(char text[], uint8_t display);
 static void ui_number(uint16_t num, uint8_t dot, uint8_t display);
 static void ui_push_item(MenuItem *item);
+static void ui_pop_item();
 
-void ui_set_display_mode(display_mode_t mode, display_t disp)
+static void ui_set_display_mode(display_mode_t mode, display_t disp)
 {
 	display_mode[disp] = mode;
 	if (mode & DISP_MODE_DIM) {
@@ -71,13 +70,11 @@ void ui_init()
 {
 	ui_set_display_mode(DISP_MODE_BRIGHT, DP_TOP);
 	ui_set_display_mode(DISP_MODE_BRIGHT, DP_BOT);
-	ui_text("BOOT", DP_TOP);
-	ui_text("888", DP_BOT);
 	menu_stack_head = 0;
 	ui_push_item(&menu_main);
 }
 
-void ui_timer_redraw()
+static void ui_timer_redraw()
 {
 	static uint16_t timer = 0;
 	timer++;
@@ -86,7 +83,7 @@ void ui_timer_redraw()
 	}
 }
 
-void ui_blink(uint8_t mode)
+static void ui_blink(uint8_t mode)
 {
 	for (uint8_t i=0; i<2; i++)
 	{
@@ -96,7 +93,7 @@ void ui_blink(uint8_t mode)
 	}
 }
 
-void ui_timer_blink()
+static void ui_timer_blink()
 {
 	static uint16_t slow_timer = 0;
 	static uint16_t fast_timer = 0;
@@ -113,6 +110,22 @@ void ui_timer_blink()
 	}
 }
 
+void ui_error_handler(uint8_t event, const MenuItem *item)
+{
+	(void) item; //Unused
+	if (event == EVENT_PREVIEW || event == EVENT_TIMER) return;
+	const char msgs[][5] = {"", "UVP ", "OVP ", "LOAD", "TEMP", "PWR ", "TIME", "INT "};
+	load_disable();
+	ui_text("ERR", DP_BOT);
+	ui_text(msgs[error], DP_TOP);
+	ui_set_display_mode(DISP_MODE_DIM, DP_TOP);
+	ui_set_display_mode(DISP_MODE_DIM, DP_BOT);
+	if (event == EVENT_ENCODER_BUTTON) {
+		error = ERROR_NONE;
+		ui_pop_item();
+	}
+}
+
 void ui_timer()
 {
 	ui_timer_redraw();
@@ -121,6 +134,10 @@ void ui_timer()
 		beeper_on();
 		_delay_us(30);
 		beeper_off();
+	}
+	if (error && current_item != &menu_error) {
+		printf("Pushing error handler\r\n");
+		ui_push_item(&menu_error);
 	}
 	if (encoder_val > 0) {
 		current_item->handler(EVENT_ENCODER_UP, current_item);
@@ -134,19 +151,20 @@ void ui_timer()
 	if (run_pressed) {
 		current_item->handler(EVENT_RUN_BUTTON, current_item);
 	}
+	current_item->handler(EVENT_TIMER, current_item);
 	encoder_val = 0;
 	run_pressed = 0;
 	encoder_pressed = 0;
 }
 
-void ui_text(char *text, uint8_t display)
+static void ui_text(const char *text, uint8_t display)
 {
 	for (uint8_t i=0; i<4; i++) {
 		if (display == DP_TOP || i != 3) disp_char(i, text[i], 0, display);
 	}
 }
 
-void ui_number(uint16_t num, uint8_t dot, uint8_t display)
+static void ui_number(uint16_t num, uint8_t dot, uint8_t display)
 {
 	uint16_t maximum = (display == DP_TOP)?10000:1000;
 	uint16_t digits = (display == DP_TOP)?4:3;
@@ -161,14 +179,19 @@ void ui_number(uint16_t num, uint8_t dot, uint8_t display)
 	}
 }
 
-uint8_t ui_num_subitem(const MenuItem *item)
+static void ui_leds(uint8_t leds)
+{
+	uint8_t run_led = load_active ? LED_RUN : 0;
+	disp_leds(leds | run_led);
+}
+
+static uint8_t ui_num_subitem(const MenuItem *item)
 {
 	uint8_t max_ = 0;
 	const MenuItem **p = item->subitems;
 	while (*p++) max_++;
 	return max_;
 }
-
 
 // Menu item handlers
 static void ui_push_item(const MenuItem *item)
@@ -181,19 +204,25 @@ static void ui_push_item(const MenuItem *item)
 	item->handler(EVENT_ENTER, item);
 }
 
-void ui_pop_item()
+static void ui_pop_item()
 {
 	if (menu_stack_head != 0) {
 		menu_stack_head--;
 	}
-	disp_leds(0);
+	ui_leds(0);
 	settings_update(); //Store change value to eeprom
 	current_item->handler(EVENT_RETURN, current_item);
 }
 
 /* This function must only be called for the currently active item. */
-void ui_handle_subitems(uint8_t event, const MenuItem *item)
+static void ui_select(uint8_t event, const MenuItem *item, uint8_t display)
 {
+	uint8_t display2 = display==DP_TOP?DP_BOT:DP_TOP;
+	bool output = event & (EVENT_BITMASK_MENU | EVENT_BITMASK_ENCODER);
+	if (event & EVENT_BITMASK_MENU) {
+		ui_set_display_mode(DISP_MODE_BLINK_FAST, display);
+		ui_set_display_mode(DISP_MODE_DIM, display2);
+	}
 	if (event == EVENT_ENCODER_UP) {
 		if (current_subitem_index < ui_num_subitem(item) - 1) {
 			current_subitem_index++;
@@ -208,17 +237,6 @@ void ui_handle_subitems(uint8_t event, const MenuItem *item)
 			current_subitem_index = ui_num_subitem(item) - 1;
 		}
 	}
-}
-
-void ui_select(uint8_t event, const MenuItem *item, uint8_t display)
-{
-	uint8_t display2 = display==DP_TOP?DP_BOT:DP_TOP;
-	bool output = event & (EVENT_BITMASK_MENU | EVENT_BITMASK_ENCODER);
-	if (event & EVENT_BITMASK_MENU) {
-		ui_set_display_mode(DISP_MODE_BLINK_FAST, display);
-		ui_set_display_mode(DISP_MODE_DIM, display2);
-	}
-	ui_handle_subitems(event, item);
 	if (output) {
 		ui_text(current_subitem->caption, display);
 	}
@@ -237,7 +255,12 @@ void ui_submenu(uint8_t event, const MenuItem *item)
 		ui_text("   ", DP_BOT);
 		return;
 	}
-
+	if (event == EVENT_RUN_BUTTON && menu_stack_head == 0)
+	{
+		//Main menu + Run button => turn on load
+		ui_push_item(&menu_active);
+		return;
+	}
 	ui_select(event, item, DP_TOP);
 	if (current_subitem->handler) {
 		current_subitem->handler(event | EVENT_PREVIEW, current_subitem);
@@ -247,9 +270,10 @@ void ui_submenu(uint8_t event, const MenuItem *item)
 	if (event == EVENT_ENCODER_BUTTON) {
 		ui_push_item(current_subitem);
 	}
+
 }
 
-uint8_t ui_find_active_subitem(const MenuItem *item)
+static uint8_t ui_find_active_subitem(const MenuItem *item)
 {
 	uint8_t n = ui_num_subitem(item);
 	uint8_t value = *((uint8_t*)item->data);
@@ -321,7 +345,7 @@ void ui_edit_value_internal(uint8_t event, const NumericEdit *edit, uint8_t leds
 	case EVENT_ENTER:
 		ui_set_display_mode(DISP_MODE_BRIGHT, display);
 		ui_set_display_mode(DISP_MODE_DIM, display2);
-		disp_leds(leds | LED_DIGIT1);
+		ui_leds(leds | LED_DIGIT1);
 		value = *edit->var;
 		current_subitem_index = 0;
 		break;
@@ -331,7 +355,7 @@ void ui_edit_value_internal(uint8_t event, const NumericEdit *edit, uint8_t leds
 	case EVENT_ENCODER_BUTTON:
 		if (current_subitem_index == 0) {
 			current_subitem_index = 1;
-			disp_leds(leds | LED_DIGIT2);
+			ui_leds(leds | LED_DIGIT2);
 		} else {
 			*edit->var = value;
 			pop = true;
@@ -370,8 +394,9 @@ void ui_edit_value(uint8_t event, const MenuItem *item)
 
 void ui_edit_setpoint(uint8_t event, const MenuItem *item)
 {
+	(void) item; //unused
 	const NumericEdit *edit = 0;
-	const char *label;
+	const char *label = 0;
 	uint8_t leds = 0;
 	switch (settings.mode) {
 		case MODE_CC:
@@ -392,9 +417,32 @@ void ui_edit_setpoint(uint8_t event, const MenuItem *item)
 			edit = &menu_value_edit_CW;
 			label = "WATT";
 			break;
+		default:
+			edit = 0;
+			label = "===";
+			break;
 	}
 	if (!(event & EVENT_PREVIEW)) ui_text(label, DP_TOP);
-	ui_edit_value_internal(event, edit, leds);
+	if (edit) ui_edit_value_internal(event, edit, leds);
+}
+
+void ui_active(uint8_t event, const MenuItem *item)
+{
+	(void) item; //unused
+	if (event & EVENT_PREVIEW) return; //Unsupported
+	if (event == EVENT_ENTER || event == EVENT_RETURN) {
+		load_enable();
+		ui_leds(0);
+		ui_set_display_mode(DISP_MODE_DIM, DP_TOP);
+		ui_set_display_mode(DISP_MODE_DIM, DP_BOT);
+		ui_text("RUN ", DP_TOP);
+		ui_text("RUN ", DP_BOT);
+	}
+	if (event == EVENT_RUN_BUTTON) {
+		load_disable();
+		ui_pop_item();
+		return;
+	}
 }
 
 //TODO: Correctly handle bouncing encoder
@@ -416,6 +464,5 @@ void GPIOC_Handler() __interrupt(5) {
 	input_values &= ~GPIOC->IDR; // store changes (H->L) for buttons
 	encoder_pressed |= input_values & PINC_ENC_P;
 	run_pressed |= input_values & PINC_RUN_P;
-	if (input_values & PINC_OL_DETECT) error = ERROR_OLP;
 	input_values = GPIOC->IDR;
 }

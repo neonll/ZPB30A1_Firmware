@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+//NOTE: Keep this enum in sync with the messages in ui_error_handler()!
 typedef enum {
 	ERROR_NONE,
 	ERROR_UVP,  // Undervoltage protection
@@ -10,7 +11,10 @@ typedef enum {
 	ERROR_OLP,  // Overload protection/warning
 	ERROR_OTP,  // Over temperature protection
 	ERROR_PWR,  // Insufficient power source
+	ERROR_TIM,  // Timer overflow
+	ERROR_INT,  // Internal error
 } error_t;
+
 extern error_t error;
 extern uint16_t  voltage; //0,01V
 extern uint16_t set_current; //mA
@@ -20,6 +24,7 @@ extern bool load_active;
 
 void load_init();
 void load_timer();
+void load_enable();
 void load_disable();
 
 

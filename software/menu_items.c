@@ -125,3 +125,13 @@ static const MenuItem menu_cutoff_value = {
     .data = &menu_cutoff_value_edit,
     .value = LED_V
 };
+
+const MenuItem menu_active = {
+    .caption = "ACT ",
+    .handler = &ui_active,
+};
+
+const MenuItem menu_error = {
+    .caption = "err ",
+    .handler = &ui_error_handler,
+};

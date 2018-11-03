@@ -4,7 +4,7 @@
 
 typedef struct _MenuItem  MenuItem;
 typedef struct _NumericEdit NumericEdit;
-typedef void     (*callback_func)        (uint8_t event, const MenuItem *data);
+typedef void     (*callback_func)        (uint8_t event, const MenuItem *item);
 
 struct _MenuItem {
 	/* Label shown in menu. */
@@ -27,6 +27,8 @@ struct _NumericEdit {
 };
 
 extern const MenuItem menu_main;
+extern const MenuItem menu_active;
+extern const MenuItem menu_error;
 extern const NumericEdit menu_value_edit_CC;
 extern const NumericEdit menu_value_edit_CV;
 extern const NumericEdit menu_value_edit_CR;
