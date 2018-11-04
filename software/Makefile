@@ -1,6 +1,6 @@
 CC=sdcc
 STM8FLASH=stm8flash
-CFLAGS=-mstm8 --std-sdcc11 --opt-code-size
+CFLAGS=-mstm8 --std-sdcc11 --opt-code-speed
 DEFINES=STM8S005
 PROCESSOR=STM8S005K6
 STLINK_VERSION=2

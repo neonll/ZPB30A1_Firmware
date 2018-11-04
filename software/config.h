@@ -28,8 +28,13 @@
 #define R_MIN 100 //mOhm
 #define R_MAX 60000 //mOhm
 
-#define ADC_OVERSAMPLING 2
-
+/* Maximum: 64 */
+#define ADC_SAMPLES_PER_MEASUREMENT 64
+#define ADC_NUM_CHANNELS 4
+#define ADC_CH_TEMPERATURE 0
+#define ADC_CH_LOAD 1
+#define ADC_CH_SENSE 2
+#define ADC_CH_12V 3
 
 // port B
 #define PINB_ENC_A (1u<<5)

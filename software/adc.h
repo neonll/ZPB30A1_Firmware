@@ -4,6 +4,6 @@
 #include "inc/stm8s_adc1.h"
 
 void adc_init();
-uint16_t analogRead(ADC1_Channel_TypeDef ch);
-uint16_t analogRead12(ADC1_Channel_TypeDef ch);
+void adc_timer();
+extern uint16_t adc_values[];
 #endif

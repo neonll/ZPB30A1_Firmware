@@ -13,7 +13,7 @@
 #include "beeper.h"
 #include "inc/stm8s_clk.h"
 #include "inc/stm8s_exti.h"
-
+#include "inc/stm8s_itc.h"
 
 void clock_init()
 {
@@ -80,6 +80,7 @@ void main(void) {
 			systick_flag &= ~SYSTICK_OVERFLOW;
 		}
 		if (systick_flag & SYSTICK_COUNT) {
+			adc_timer();
 			fan_timer();
 			ui_timer();
 			load_timer();
@@ -177,3 +178,4 @@ void GPIOC_Handler() __interrupt(5);
 void UART2_RX_IRQHandler() __interrupt(21);
 // void GPIOD_Handler() __interrupt(6);
 void TIM2_UPD_OVF_Handler() __interrupt(13);
+void adc_irq() __interrupt(ITC_IRQ_ADC1);

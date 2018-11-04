@@ -40,8 +40,10 @@ static void fan_set_pwm()
 //TODO: Remove magic numbers
 static void fan_update_temperature(void)
 {
+	#if 0
 	uint16_t tmp = (10720 - analogRead(ADC1_CHANNEL_0) * 10) >> 3;
 	temperature = tmp;
+	#endif
 }
 
 void fan_timer()

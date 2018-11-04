@@ -58,6 +58,7 @@ void load_timer()
 
 void getVoltage(void)
 {
+    #if 0
 	uint16_t v1, v_ref, v2, v_load;
 	v1 = analogRead12(ADC1_CHANNEL_1);
 	//v_load = 1.02217839986557 * v1 - 81.5878664441528;
@@ -71,6 +72,7 @@ void getVoltage(void)
 			voltage = v_ref;
 		}
 	}
+    #endif
 }
 
 void calcPWM(void)
