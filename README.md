@@ -90,3 +90,14 @@ selected unit.
 This firmware started as a project to extend the firmware written by
 (soundstorm)[https://github.com/ArduinoHannover/ZPB30A1_Firmware] but it turned
 out as an almost complete rewrite which keeps the user interface idea.
+
+## Schematic
+Schematic can be found in hardware/schematic.pdf.
+
+### Schematic corrections:
+* R5 = 10k
+* R27 = 1k
+* D6 = reversed polarity
+
+### Component locations
+![Component locations](images/components.jpg)
