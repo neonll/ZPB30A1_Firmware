@@ -1,6 +1,7 @@
 #include "timer.h"
 #include "config.h"
 #include "inc/stm8s_tim2.h"
+#include "inc/stm8s_itc.h"
 
 volatile uint32_t systick = 0;
 volatile uint8_t systick_flag = 0;
@@ -16,7 +17,7 @@ void systick_init()
 	TIM2->CR1    = TIM2_CR1_CEN;
 }
 //TODO: IRQ priorities
-void TIM2_UPD_OVF_Handler() __interrupt(13)
+void systick_irq() __interrupt(ITC_IRQ_TIM2_OVF)
 {
 	if (systick_flag & SYSTICK_COUNT) {
 		systick_flag |= SYSTICK_OVERFLOW;

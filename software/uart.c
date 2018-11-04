@@ -1,6 +1,7 @@
 #include "uart.h"
 #include "config.h"
 #include "inc/stm8s_uart2.h"
+#include "inc/stm8s_itc.h"
 #include <stdio.h>
 
 void uart_init()
@@ -27,7 +28,7 @@ int getchar(void)
 }
 
 //TODO: Rewrite this function. printf in IRQ context is never a good idea.
-void UART2_RX_IRQHandler() __interrupt(21)
+void uart_rx_irq() __interrupt(ITC_IRQ_UART2_RX)
 {
 	char tmp = UART2->DR;
 	if(tmp == 'S'){	//start command from LogView

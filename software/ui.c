@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "stdio.h" //Debugging only
 #include "inc/stm8s_gpio.h"
+#include "inc/stm8s_itc.h"
 
 typedef enum {
 	/* Bitmask:
@@ -446,7 +447,8 @@ void ui_active(uint8_t event, const MenuItem *item)
 }
 
 //TODO: Correctly handle bouncing encoder
-void GPIOB_Handler() __interrupt(4) {
+void ui_encoder_irq() __interrupt(ITC_IRQ_PORTB)
+{
 	static uint8_t _encoder_dir = 0xFF;
 	uint8_t cur = (GPIOB->IDR >> 4) & 3;
 	if (cur == 0) {
@@ -459,7 +461,8 @@ void GPIOB_Handler() __interrupt(4) {
 	_encoder_dir = cur;
 }
 
-void GPIOC_Handler() __interrupt(5) {
+void ui_button_irq() __interrupt(ITC_IRQ_PORTC)
+{
 	static uint8_t input_values = 0xFF;
 	input_values &= ~GPIOC->IDR; // store changes (H->L) for buttons
 	encoder_pressed |= input_values & PINC_ENC_P;

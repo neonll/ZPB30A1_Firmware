@@ -167,15 +167,14 @@ void main(void) {
 }
 
 //Voltage OK interrupt
-void GPIOD_Handler() __interrupt(6) {
+void GPIOD_Handler() __interrupt(ITC_IRQ_PORTD) {
 }
 
 /* If you have multiple source files in your project, interrupt service routines
  can be present in any of them, but a prototype of the isr MUST be present or
  included in the file that contains the function main. */
-void GPIOB_Handler() __interrupt(4);
-void GPIOC_Handler() __interrupt(5);
-void UART2_RX_IRQHandler() __interrupt(21);
-// void GPIOD_Handler() __interrupt(6);
-void TIM2_UPD_OVF_Handler() __interrupt(13);
+void ui_encoder_irq() __interrupt(ITC_IRQ_PORTB);
+void ui_button_irq() __interrupt(ITC_IRQ_PORTC);
+void uart_rx_irq() __interrupt(ITC_IRQ_UART2_RX);
+void systick_irq() __interrupt(ITC_IRQ_TIM2_OVF);
 void adc_irq() __interrupt(ITC_IRQ_ADC1);
