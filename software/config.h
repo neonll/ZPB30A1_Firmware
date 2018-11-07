@@ -13,7 +13,7 @@
 #define F_DISPLAY_BLINK_FAST 15
 
 #define F_POWER_CALC 1
-#define F_FAN 0.2
+#define F_FAN 5
 
 #define F_UI_AUTODISPLAY 0.2
 #define F_BEEP_ERROR 2
@@ -35,6 +35,17 @@
 #define ADC_CH_LOAD 1
 #define ADC_CH_SENSE 2
 #define ADC_CH_12V 3
+
+/* Calibration data: hardware/temperature.ods */
+#define FAN_CAL_M 42
+#define FAN_CAL_T 64014
+
+#define FAN_TEMPERATURE_OTP_LIMIT 850 // * 0.1°C
+#define FAN_TEMPERATURE_FULL 750 // * 0.1°C
+#define FAN_TEMPERATURE_LOW  350 // * 0.1°C
+#define FAN_ALWAYS_ON 1
+#define FAN_SPEED_LOW ((uint16_t)(0xffff/50)) // PWM value. max: 0xffff
+#define FAN_SPEED_FULL 0xffff // PWM value. max: 0xffff
 
 // port B
 #define PINB_ENC_A (1u<<5)

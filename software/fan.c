@@ -2,13 +2,12 @@
 #include "load.h"
 #include "adc.h"
 #include "config.h"
+#include <stdio.h>
 #include "inc/stm8s_tim3.h"
-uint16_t temperature = 0;
+uint16_t temperature = 0; //in 0.1°C
 
 void fan_init()
 {
-	//TIM3->ARRH   = 0x10;
-	//TIM3->ARRL   = 0x00;
 	TIM3->CCMR2  = TIM3_OCMODE_PWM1 | TIM3_CCMR_OCxPE;
 	TIM3->CCER1  = TIM3_CCER1_CC2E;
 	TIM3->PSCR   = TIM3_PRESCALER_1; // Prescaler of 1 gives 16 MHz / 2^16 = 244 Hz
@@ -17,33 +16,43 @@ void fan_init()
 	TIM3->CCR2L  = 0;
 }
 
-//TODO: Remove magic numbers
 static void fan_set_pwm()
 {
-	if (temperature > 850) { // Over temperature protection
-		TIM3->CCR2H  = 0xFF;
-		TIM3->CCR2L  = 0xFF;
-		error = ERROR_OTP;
-	}
-	if (temperature > 400) {
-		TIM3->CCR2H  = (temperature * 54) >> 8;
-		TIM3->CCR2L  = (uint8_t)(temperature * 54);
-	} else if (load_active) { // Set minimum pwm of 1/3 if switched on
-		TIM3->CCR2H  = 0x55;
-		TIM3->CCR2L  = 0x55;
+	if (temperature > FAN_TEMPERATURE_FULL) {
+		// Over temperature protection
+		if (temperature > FAN_TEMPERATURE_OTP_LIMIT) {
+			error = ERROR_OTP;
+		}
+		TIM3->CCR2H  = FAN_SPEED_FULL >> 8;
+		TIM3->CCR2L  = FAN_SPEED_FULL & 0xff;
+	} else if (temperature > FAN_TEMPERATURE_LOW) {
+		#define INT_ROUND_DIV(x,y) (((x)+((y)/2))/(y))
+		uint16_t fan_speed = FAN_SPEED_LOW +
+							 (temperature - FAN_TEMPERATURE_LOW) *
+							 INT_ROUND_DIV(FAN_SPEED_FULL - FAN_SPEED_LOW,
+								 FAN_TEMPERATURE_FULL - FAN_TEMPERATURE_LOW);
+		printf("fan speed: %u\r\n");
+		TIM3->CCR2H = fan_speed >> 8;
+		TIM3->CCR2L = fan_speed & 0xff;
+		//TODO
 	} else {
-		TIM3->CCR2H  = 0;
-		TIM3->CCR2L  = 0;
+		#if FAN_ALWAYS_ON
+		if (load_active) {
+			TIM3->CCR2H  = FAN_SPEED_LOW >> 8;
+			TIM3->CCR2L  = FAN_SPEED_LOW & 0xff;
+		} else {
+		#else
+			{
+		#endif
+			TIM3->CCR2H  = 0;
+			TIM3->CCR2L  = 0;
+		}
 	}
 }
 
-//TODO: Remove magic numbers
 static void fan_update_temperature(void)
 {
-	#if 0
-	uint16_t tmp = (10720 - analogRead(ADC1_CHANNEL_0) * 10) >> 3;
-	temperature = tmp;
-	#endif
+	temperature = (FAN_CAL_T - adc_values[ADC_CH_TEMPERATURE]) / FAN_CAL_M;
 }
 
 void fan_timer()
@@ -54,5 +63,6 @@ void fan_timer()
 		timer = 0;
 		fan_update_temperature();
 		fan_set_pwm();
+		printf("T: %d %u\r\n", temperature, adc_values[ADC_CH_TEMPERATURE]);
 	}
 }
