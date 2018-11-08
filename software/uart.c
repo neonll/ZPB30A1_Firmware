@@ -6,11 +6,9 @@
 
 void uart_init()
 {
-	uint32_t Mant, Mant100;
-	Mant = ((uint32_t)F_CPU / (BAUDR << 4));
-	Mant100 = (((uint32_t)F_CPU * 100) / (BAUDR << 4));
-	UART2->BRR2 = (uint8_t)(((uint8_t)(((Mant100 - (Mant * 100)) << 4) / 100) & (uint8_t)0x0F) | ((Mant >> 4) & (uint8_t)0xF0));
-	UART2->BRR1 = (uint8_t)Mant;
+	uint16_t uart_div =  (F_CPU + BAUDR/2) / BAUDR;
+	UART2->BRR2 = (uart_div >> 12) | (uart_div & 0x0f);
+	UART2->BRR1 = (uart_div >> 4);
 	UART2->CR2 = UART2_CR2_TEN | UART2_CR2_REN | UART2_CR2_RIEN;
 }
 
