@@ -137,7 +137,6 @@ void ui_timer()
 		beeper_off();
 	}
 	if (error && current_item != &menu_error) {
-		printf("Pushing error handler\r\n");
 		ui_push_item(&menu_error);
 	}
 	if (encoder_val > 0) {

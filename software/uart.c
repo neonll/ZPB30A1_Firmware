@@ -11,8 +11,7 @@ void uart_init()
 	Mant100 = (((uint32_t)F_CPU * 100) / (BAUDR << 4));
 	UART2->BRR2 = (uint8_t)(((uint8_t)(((Mant100 - (Mant * 100)) << 4) / 100) & (uint8_t)0x0F) | ((Mant >> 4) & (uint8_t)0xF0));
 	UART2->BRR1 = (uint8_t)Mant;
-	UART2->CR2 = UART2_CR2_TEN | UART2_CR2_REN;
-	UART2->CR2 |= (uint8_t)((uint8_t)1 << (uint8_t)((uint8_t)0x0205 & (uint8_t)0x0F)); //enable RX interrupt
+	UART2->CR2 = UART2_CR2_TEN | UART2_CR2_REN | UART2_CR2_RIEN;
 }
 
 int putchar(int c)
@@ -22,18 +21,8 @@ int putchar(int c)
 	return c;
 }
 
-int getchar(void)
-{
-	return UART2->DR;
-}
 
-//TODO: Rewrite this function. printf in IRQ context is never a good idea.
 void uart_rx_irq() __interrupt(ITC_IRQ_UART2_RX)
 {
 	char tmp = UART2->DR;
-	if(tmp == 'S'){	//start command from LogView
-		printf("$N$;Electronic Load\r\n");
-		printf("$C$;Current [A,I];Voltage [V,U];Ampere hour[Ah];Watt hour[Wh];Temperature[°C,T]\r\n");
-		printf("$F$;0.001;0.01;0.000000277778;0.000000277778;0,1\r\n");	//convert units for logview
-	}
 }
