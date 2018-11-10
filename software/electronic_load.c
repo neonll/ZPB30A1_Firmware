@@ -84,6 +84,7 @@ void main(void) {
 			fan_timer();
 			ui_timer();
 			load_timer();
+			uart_timer();
 			systick_flag &= ~SYSTICK_COUNT;
 		}
 	}

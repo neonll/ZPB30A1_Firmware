@@ -3,6 +3,7 @@
 #include "inc/stm8s_uart2.h"
 #include "inc/stm8s_itc.h"
 #include <stdio.h>
+#include "adc.h"
 
 void uart_init()
 {
@@ -17,6 +18,16 @@ int putchar(int c)
 	UART2->DR = (char) c;
 	while (!(UART2->SR & (uint8_t)UART2_FLAG_TXE));
 	return c;
+}
+
+void uart_timer()
+{
+	static uint16_t timer = 0;
+	timer++;
+	if (timer == F_SYSTICK/F_LOG) {
+		timer = 0;
+		printf("T: %3u Vi: %5u\r\n", temperature, v_12V);
+	}
 }
 
 

@@ -4,7 +4,6 @@
 #include "config.h"
 #include <stdio.h>
 #include "inc/stm8s_tim3.h"
-uint16_t temperature = 0; //in 0.1°C
 
 void fan_init()
 {
@@ -31,10 +30,8 @@ static void fan_set_pwm()
 							 (temperature - FAN_TEMPERATURE_LOW) *
 							 INT_ROUND_DIV(FAN_SPEED_FULL - FAN_SPEED_LOW,
 								 FAN_TEMPERATURE_FULL - FAN_TEMPERATURE_LOW);
-		printf("fan speed: %u\r\n");
 		TIM3->CCR2H = fan_speed >> 8;
 		TIM3->CCR2L = fan_speed & 0xff;
-		//TODO
 	} else {
 		#if FAN_ALWAYS_ON
 		if (load_active) {
@@ -50,19 +47,12 @@ static void fan_set_pwm()
 	}
 }
 
-static void fan_update_temperature(void)
-{
-	temperature = (FAN_CAL_T - adc_values[ADC_CH_TEMPERATURE]) / FAN_CAL_M;
-}
-
 void fan_timer()
 {
 	static uint16_t timer = 0;
 	timer++;
 	if (timer == F_SYSTICK/F_FAN) {
 		timer = 0;
-		fan_update_temperature();
 		fan_set_pwm();
-		printf("T: %d %u\r\n", temperature, adc_values[ADC_CH_TEMPERATURE]);
 	}
 }

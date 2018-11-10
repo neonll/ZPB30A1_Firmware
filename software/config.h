@@ -18,6 +18,7 @@
 #define F_UI_AUTODISPLAY 0.2
 #define F_BEEP_ERROR 2
 #define F_BEEP_KHZ 1 // 1, 2 or 4
+#define F_LOG 5
 
 #define VOLT_MIN 1000 //mV
 #define VOLT_MAX 30000 //mV
@@ -37,8 +38,12 @@
 #define ADC_CH_12V 3
 
 /* Calibration data: hardware/temperature.ods */
-#define FAN_CAL_M 42
-#define FAN_CAL_T 64014
+#define ADC_CAL_TEMP_M 42
+#define ADC_CAL_TEMP_T 64014
+/* 12V mesurement Voltage divider: 1/3
+    V12V in mV = ADC * 5Vref * 3 / 2^16 * 1000mV/V = ADC * 15000 / 2^16
+*/
+#define ADC_CAL_12V 15080
 
 #define FAN_TEMPERATURE_OTP_LIMIT 850 // * 0.1°C
 #define FAN_TEMPERATURE_FULL 750 // * 0.1°C

@@ -5,5 +5,9 @@
 
 void adc_init();
 void adc_timer();
-extern uint16_t adc_values[];
+extern uint16_t temperature;
+extern uint16_t v_12V;
+extern uint16_t v_load;
+extern uint16_t v_sense;
+
 #endif

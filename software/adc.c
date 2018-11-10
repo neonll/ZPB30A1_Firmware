@@ -6,6 +6,10 @@
 static uint16_t adc_sum[ADC_NUM_CHANNELS];
 uint16_t adc_values[ADC_NUM_CHANNELS];
 static uint8_t adc_count = 0;
+uint16_t temperature;
+uint16_t v_12V;
+uint16_t v_load;
+uint16_t v_sense;
 
 void adc_init()
 {
@@ -51,6 +55,12 @@ void adc_irq() __interrupt(ITC_IRQ_ADC1)
     }
 }
 
+void adc_update()
+{
+    temperature = (ADC_CAL_TEMP_T - adc_values[ADC_CH_TEMPERATURE]) / ADC_CAL_TEMP_M;
+    v_12V = (uint32_t)adc_values[ADC_CH_12V] * ADC_CAL_12V >> 16;
+}
+
 void adc_timer()
 {
     for (uint8_t i=0; i<ADC_NUM_CHANNELS; i++) {
@@ -60,4 +70,5 @@ void adc_timer()
     //Start next measurement
     adc_count = 0;
     ADC1->CR1 |= ADC1_CR1_ADON;
+    adc_update();
 }
