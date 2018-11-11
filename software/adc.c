@@ -59,6 +59,20 @@ void adc_update()
 {
     temperature = (ADC_CAL_TEMP_T - adc_values[ADC_CH_TEMPERATURE]) / ADC_CAL_TEMP_M;
     v_12V = (uint32_t)adc_values[ADC_CH_12V] * ADC_CAL_12V >> 16;
+
+    int32_t tmps;
+    uint32_t tmpu;
+
+    tmps = adc_values[ADC_CH_LOAD];
+    tmps -= ADC_CAL_LOAD_T;
+    tmpu = tmps > 0 ? tmps : 0;
+    v_load = tmpu * ADC_CAL_LOAD_M >> 16;
+
+    tmps = adc_values[ADC_CH_SENSE];
+    tmps -= ADC_CAL_SENSE_T;
+    tmpu = tmps > 0 ? tmps : 0;
+    v_sense = tmpu * ADC_CAL_SENSE_M >> 16;
+
 }
 
 void adc_timer()

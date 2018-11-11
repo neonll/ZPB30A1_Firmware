@@ -26,7 +26,7 @@ void uart_timer()
 	timer++;
 	if (timer == F_SYSTICK/F_LOG) {
 		timer = 0;
-		printf("T: %3u Vi: %5u\r\n", temperature, v_12V);
+		printf("T: %3u Vi: %5u Vl: %5u Vs: %5u\r\n", temperature, v_12V, v_load, v_sense);
 	}
 }
 
