@@ -20,7 +20,7 @@ static void fan_set_pwm()
 	if (temperature > FAN_TEMPERATURE_FULL) {
 		// Over temperature protection
 		if (temperature > FAN_TEMPERATURE_OTP_LIMIT) {
-			error = ERROR_OTP;
+			error = ERROR_OVERTEMPERATURE;
 		}
 		TIM3->CCR2H  = FAN_SPEED_FULL >> 8;
 		TIM3->CCR2L  = FAN_SPEED_FULL & 0xff;

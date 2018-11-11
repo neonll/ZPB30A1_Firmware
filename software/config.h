@@ -57,8 +57,10 @@
 /* ADC value at which reverse voltage protection is triggered. Corresponds to
 ~-0.5V
  */
-#define ADC_LOAD_MIN  450
-#define ADC_SENSE_MIN 430
+#define ADC_LOAD_MIN  450 // ADC counts
+#define ADC_SENSE_MIN 430 // ADC counts
+#define ADC_12V_MIN 10000 // mV
+#define ADC_INPUT_MAX 35000 // mV
 
 #define FAN_TEMPERATURE_OTP_LIMIT 850 // * 0.1°C
 #define FAN_TEMPERATURE_FULL 750 // * 0.1°C

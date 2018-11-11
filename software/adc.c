@@ -1,4 +1,5 @@
 #include "adc.h"
+#include "load.h"
 #include "config.h"
 #include "inc/stm8s_itc.h"
 #include <stdio.h>
@@ -73,6 +74,18 @@ void adc_update()
     tmpu = tmps > 0 ? tmps : 0;
     v_sense = tmpu * ADC_CAL_SENSE_M >> 16;
 
+    if (v_12V < ADC_12V_MIN) {
+        error = ERROR_POWER_SUPPLY;
+    }
+
+    if ((adc_values[ADC_CH_LOAD]  < ADC_LOAD_MIN) ||
+        (adc_values[ADC_CH_SENSE] < ADC_SENSE_MIN)) {
+        error = ERROR_POLARITY;
+    }
+
+    if ((v_load > ADC_INPUT_MAX) || (v_sense > ADC_INPUT_MAX)) {
+        error = ERROR_OVERVOLTAGE;
+    }
 }
 
 void adc_timer()

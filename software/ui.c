@@ -115,7 +115,7 @@ void ui_error_handler(uint8_t event, const MenuItem *item)
 {
 	(void) item; //Unused
 	if (event == EVENT_PREVIEW || event == EVENT_TIMER) return;
-	const char msgs[][5] = {"", "UVP ", "OVP ", "LOAD", "TEMP", "PWR ", "TIME", "INT "};
+	const char msgs[][5] = {"", "POL ", "OVP ", "LOAD", "TEMP", "PWR ", "TIME", "INT "};
 	load_disable();
 	ui_text("ERR", DP_BOT);
 	ui_text(msgs[error], DP_TOP);

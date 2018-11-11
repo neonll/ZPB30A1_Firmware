@@ -6,13 +6,13 @@
 //NOTE: Keep this enum in sync with the messages in ui_error_handler()!
 typedef enum {
 	ERROR_NONE,
-	ERROR_UVP,  // Undervoltage protection
-	ERROR_OVP,  // Overvoltage protection
-	ERROR_OLP,  // Overload protection/warning
-	ERROR_OTP,  // Over temperature protection
-	ERROR_PWR,  // Insufficient power source
-	ERROR_TIM,  // Timer overflow
-	ERROR_INT,  // Internal error
+	ERROR_POLARITY, // input polarity reversed
+	ERROR_OVERVOLTAGE, // input voltage to high
+	ERROR_OVERLOAD,
+	ERROR_OVERTEMPERATURE, // heat sink temperature to high
+	ERROR_POWER_SUPPLY, // supply voltage to low
+	ERROR_TIMER_OVERFLOW, // timer tick lost
+	ERROR_INTERNAL, // other internal error
 } error_t;
 
 extern error_t error;
