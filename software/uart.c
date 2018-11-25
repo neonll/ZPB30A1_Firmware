@@ -25,9 +25,28 @@ void uart_timer()
 {
 	static uint16_t timer = 0;
 	timer++;
-	if (timer == F_SYSTICK/F_LOG) {
+	if (timer == F_SYSTICK/(F_LOG*7)) {
 		timer = 0;
-		printf("T: %3u Vi: %5u Vl: %5u Vs: %5u C: %5u mWs: %5lu mAs: %5lu\r\n", temperature, v_12V, v_load, v_sense, actual_current_setpoint, mWatt_seconds, mAmpere_seconds);
+		static uint8_t cnt = 0;
+		cnt++;
+		if (cnt == 0) {
+			printf("T %3u ", temperature);
+		} else if (cnt == 1) {
+			printf("Vi %5u ", v_12V);
+		} else if (cnt == 2) {
+			printf("Vl %5u ", v_load);
+		} else if (cnt == 3) {
+			printf("Vs %5u ", v_sense);
+		} else if (cnt == 4) {
+			printf("I %5u ", actual_current_setpoint);
+		} else if (cnt == 5) {
+			printf("mWs %10u ", mWatt_seconds);
+		} else if (cnt == 6) {
+			printf("mAs %10u ", mAmpere_seconds);
+		} else {
+			printf("\r\n");
+			cnt = 0;
+		}
 	}
 }
 
