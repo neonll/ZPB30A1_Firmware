@@ -77,7 +77,8 @@
 
 #define FAN_TEMPERATURE_OTP_LIMIT 850 // * 0.1°C
 #define FAN_TEMPERATURE_FULL 750 // * 0.1°C
-#define FAN_TEMPERATURE_LOW  350 // * 0.1°C
+#define FAN_TEMPERATURE_LOW  400 // * 0.1°C
+#define FAN_ON_OFF_HYSTERESIS 50 // * 0.1°C
 #define FAN_ALWAYS_ON 0
 #define FAN_SPEED_LOW ((uint16_t)(0xffff/50)) // PWM value. max: 0xffff
 #define FAN_SPEED_FULL 0xffff // PWM value. max: 0xffff
