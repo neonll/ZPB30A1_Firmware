@@ -79,9 +79,10 @@
 #define FAN_TEMPERATURE_FULL 750 // * 0.1°C
 #define FAN_TEMPERATURE_LOW  400 // * 0.1°C
 #define FAN_ON_OFF_HYSTERESIS 50 // * 0.1°C
-#define FAN_ALWAYS_ON 0
-#define FAN_SPEED_LOW ((uint16_t)(0xffff/50)) // PWM value. max: 0xffff
-#define FAN_SPEED_FULL 0xffff // PWM value. max: 0xffff
+#define FAN_ALWAYS_ON 1
+#define FAN_PWM_MAX 0xfff
+#define FAN_SPEED_LOW ((uint16_t)(FAN_PWM_MAX/20)) // PWM value
+#define FAN_SPEED_FULL FAN_PWM_MAX // PWM value. max: 0xffff
 
 // port B
 #define PINB_ENC_A (1u<<5)
