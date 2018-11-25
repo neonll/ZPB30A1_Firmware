@@ -4,6 +4,7 @@
 #include "inc/stm8s_itc.h"
 #include <stdio.h>
 #include "adc.h"
+#include "load.h"
 
 void uart_init()
 {
@@ -26,7 +27,7 @@ void uart_timer()
 	timer++;
 	if (timer == F_SYSTICK/F_LOG) {
 		timer = 0;
-		printf("T: %3u Vi: %5u Vl: %5u Vs: %5u\r\n", temperature, v_12V, v_load, v_sense);
+		printf("T: %3u Vi: %5u Vl: %5u Vs: %5u C: %5u mWs: %5lu mAs: %5lu\r\n", temperature, v_12V, v_load, v_sense, actual_current_setpoint, mWatt_seconds, mAmpere_seconds);
 	}
 }
 

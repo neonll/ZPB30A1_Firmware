@@ -90,7 +90,11 @@ void adc_update()
 
 void adc_timer()
 {
+    if (adc_count != ADC_SAMPLES_PER_MEASUREMENT) {
+        error = ERROR_INTERNAL;
+    }
     for (uint8_t i=0; i<ADC_NUM_CHANNELS; i++) {
+        // ADC is 10 bits => multiplying by 64 result in a left aligned 16 bit measurement.
         adc_values[i] = adc_sum[i] * (64 / ADC_SAMPLES_PER_MEASUREMENT);
         adc_sum[i] = 0;
     }
@@ -98,4 +102,10 @@ void adc_timer()
     adc_count = 0;
     ADC1->CR1 |= ADC1_CR1_ADON;
     adc_update();
+}
+
+uint16_t adc_get_voltage()
+{
+  if (v_sense > v_load) return v_sense;
+  return v_load;
 }

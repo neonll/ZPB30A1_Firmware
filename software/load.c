@@ -4,105 +4,118 @@
 #include "settings.h"
 #include "inc/stm8s_tim1.h"
 
-uint16_t voltage = 0;	//mV
-uint16_t set_current = 0;	//mA
-volatile uint32_t mAmpere_seconds = 0;	//mAs
-volatile uint32_t mWatt_seconds = 0;	//mWs
+uint32_t mAmpere_seconds = 0;
+uint32_t mWatt_seconds = 0;
 bool load_active = 0;
 error_t error = ERROR_NONE;
+calibration_t calibration_step;
+uint16_t calibration_value;
+uint16_t actual_current_setpoint;
 
 void load_init()
 {
     #define PWM_RELOAD (F_CPU / F_PWM)
     // I-SET
-	TIM1->ARRH   = PWM_RELOAD >> 8;
-	TIM1->ARRL   = PWM_RELOAD & 0xff;
-	TIM1->PSCRH  = 0;
-	TIM1->PSCRL  = 0;
+    // Low pass is <8 Hz, so we can use full 16 bit resolution (~244Hz).
+	TIM1->ARRH = 0xff;
+	TIM1->ARRL = 0xff;
+	TIM1->PSCRH = 0;
+	TIM1->PSCRL = 0;
 
-	TIM1->CCMR1  = TIM1_OCMODE_PWM1 | TIM1_CCMR_OCxPE;
-	TIM1->CCER1  = TIM1_CCER1_CC1E;
-	TIM1->CCR1H  = 0;
-	TIM1->CCR1L  = 0;
-	TIM1->CR1   |= TIM1_CR1_CEN | TIM1_CR1_ARPE;
-	TIM1->BKR   |= TIM1_BKR_MOE;
+	TIM1->CCMR1 = TIM1_OCMODE_PWM1 | TIM1_CCMR_OCxPE;
+	TIM1->CCER1 = TIM1_CCER1_CC1E;
+	TIM1->CCR1H = 0;
+	TIM1->CCR1L = 0;
+	TIM1->CR1 = TIM1_CR1_CEN;
+	TIM1->BKR = TIM1_BKR_MOE;
 }
 
 void load_disable()
 {
     load_active = 0;
-    GPIOE->ODR &= ~PINE_ENABLE;
+    GPIOE->ODR |= PINE_ENABLE;
 }
 
 void load_enable()
 {
     load_active = 1;
-    //TODO
-    // GPIOE->ODR &= ~PINE_ENABLE;
+    GPIOE->ODR &= ~PINE_ENABLE;
+}
+
+static inline void load_update()
+{
+    uint16_t setpoint = settings.setpoints[settings.mode];
+    uint16_t current = 0;
+
+    if (calibration_step == CAL_CURRENT) {
+        TIM1->CCR1H = calibration_value >> 8;
+        TIM1->CCR1L = calibration_value & 0xff;
+        return;
+    }
+    switch (settings.mode) {
+        case MODE_CC:
+            current = setpoint;
+            break;
+        case MODE_CV:
+            current = 0;
+            //TODO: Unsupported
+            break;
+        case MODE_CR:
+            //U[mV]/R[10mOhm]=I[mA]
+            //U*1000 * c / R*100 = I * 1000
+            // => c = 100
+            current = (uint32_t)adc_get_voltage() * 100 / setpoint;
+            break;
+        case MODE_CW:
+            //P[mW]/U[mV] = I[mA]
+            //P*1000 * c / U*1000 = I * 1000
+            // => c = 1000
+            current = (uint32_t)setpoint * 1000 / adc_get_voltage();
+            break;
+    }
+    /* NOTE: Here v_load is used directly instead of adc_get_voltage, because
+       for the power dissipation only the voltage that reaches the load's
+       terminals is relevant. */
+    uint16_t current_power_limited = (uint32_t)(POW_ABS_MAX) * 1000 / v_load;
+    if (current < CUR_MIN) current = CUR_MIN;
+    if (current > CUR_MAX) current = CUR_MAX;
+    if (current > current_power_limited) current = current_power_limited;
+    actual_current_setpoint = current;
+
+    uint32_t tmp = current;
+    tmp = tmp * LOAD_CAL_M - LOAD_CAL_T;
+    TIM1->CCR1H = tmp >> 24;
+    TIM1->CCR1L = tmp >> 16;
+}
+
+static inline void load_calc_power()
+{
+    static uint16_t timer = 0;
+    static uint8_t power_remainder = 0;
+    static uint8_t current_remainder = 0;
+    #if F_SYSTICK % F_POWER_CALC != 0
+        #error "F_POWER_CALC must be an integer divider of F_SYSTICK"
+    #endif
+    timer++;
+    if (timer == F_SYSTICK/F_POWER_CALC) {
+        timer = 0;
+        uint32_t power = actual_current_setpoint;
+        power *= v_sense;
+        power /= 1000;
+        power += power_remainder; //Keep track of rounding errors
+        power_remainder = power % F_POWER_CALC;
+        mWatt_seconds += power / F_POWER_CALC;
+
+        uint16_t current = actual_current_setpoint + current_remainder;
+        current_remainder = current % F_POWER_CALC;
+        mAmpere_seconds += current / F_POWER_CALC;
+    }
 }
 
 void load_timer()
 {
-    static uint16_t timer = 0;
-    timer++;
-    if (timer == F_SYSTICK/F_POWER_CALC) {
-        timer = 0;
-        // watts can be 60000 max.
-        uint32_t mWatt = set_current;
-        mWatt *= voltage;
-        mWatt /= 100;	//voltage is in 0,01V unit
-        mWatt_seconds += mWatt / F_POWER_CALC;
-        mAmpere_seconds += set_current / F_POWER_CALC;
+    if (load_active) {
+        load_calc_power();
     }
-}
-
-void getVoltage(void)
-{
-    #if 0
-	uint16_t v1, v_ref, v2, v_load;
-	v1 = analogRead12(ADC1_CHANNEL_1);
-	//v_load = 1.02217839986557 * v1 - 81.5878664441528;
-	v_load = 1.012877085 * v1 - 84.025827; // my new calibration with precision measuring
-	v2 = analogRead12(ADC1_CHANNEL_2);
-	//v_ref = 0.891348658196074 * v2 - 80.4250357289787;
-	v_ref = 0.8921068686 * v2 - 83.353412; // my new calibration with precision measuring
-	if (v1 > 85) {
-		voltage = v_load;
-		if (v_ref >= v_load && v_ref < v_load + 100) {
-			voltage = v_ref;
-		}
-	}
-    #endif
-}
-
-void calcPWM(void)
-{
-	uint16_t pwm;
-	uint32_t current;
-	switch (settings.mode) {
-		case MODE_CC:
-			current = settings.setpoints[MODE_CC];
-			break;
-		case MODE_CW: // I = P / U
-			current = settings.setpoints[MODE_CW];
-			current *= 100; //voltage is in V/100
-			current /= voltage;
-			break;
-		case MODE_CR: // I = U / R
-			current = ((uint32_t) voltage * 10000) / settings.setpoints[MODE_CR]; //R in 0,001 Ohm
-			break;
-	}
-	if (current > 10000) current = 10000;
-	if (current < 130) current = 130; //load can't go lower then 130mA even with 0 duty cycle
-	set_current = current;
-	//pwm = I_PWM_FACTOR * current + I_PWM_OFFSET;
-	pwm = 2.275235373 * current - 287.0860829; // Output current is linear function of PWM. Regression gained from real measuring.
-	TIM1->CCR1H = pwm >> 8;
-	TIM1->CCR1L = (uint8_t) pwm;
-	// CC
-	// set_value[0];
-	// CW
-	// set_value[1] / voltage;
-	// CR
-	// voltage / set_value[2]
+    load_update();
 }

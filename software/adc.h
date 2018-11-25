@@ -5,6 +5,8 @@
 
 void adc_init();
 void adc_timer();
+/* Returns either v_load or v_sense depending on if v_sense is connected. */
+uint16_t adc_get_voltage();
 extern uint16_t temperature;
 extern uint16_t v_12V;
 extern uint16_t v_load;

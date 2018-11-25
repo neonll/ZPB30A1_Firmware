@@ -2,6 +2,7 @@
 #define _LOAD_H_
 #include <stdbool.h>
 #include <stdint.h>
+#include "settings.h"
 
 //NOTE: Keep this enum in sync with the messages in ui_error_handler()!
 typedef enum {
@@ -14,21 +15,27 @@ typedef enum {
 	ERROR_TIMER_OVERFLOW, // timer tick lost
 	ERROR_INTERNAL, // other internal error
 } error_t;
-
 extern error_t error;
-extern uint16_t  voltage; //0,01V
-extern uint16_t set_current; //mA
-extern volatile uint32_t mAmpere_seconds;	//mAs
-extern volatile uint32_t mWatt_seconds;	//mWs
+
+typedef enum {
+	CAL_NONE,
+	CAL_CURRENT,
+} calibration_t;
+
 extern bool load_active;
+extern uint16_t current_setpoint;
+extern calibration_t calibration_step;
+extern uint16_t calibration_value;
+
+/* Current setpoint after all constraints are taken into account. */
+extern uint16_t actual_current_setpoint;
+extern uint32_t mAmpere_seconds;
+extern uint32_t mWatt_seconds;
+
 
 void load_init();
 void load_timer();
 void load_enable();
 void load_disable();
-
-
-void calcPWM(void);
-void getVoltage(void);
 
 #endif

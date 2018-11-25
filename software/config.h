@@ -4,7 +4,6 @@
 //F_xxx is in Hz
 #define F_CPU 16000000L
 #define F_SYSTICK 100
-#define F_PWM 571L
 
 #define BAUDR 115200L
 
@@ -12,7 +11,9 @@
 #define F_DISPLAY_BLINK_SLOW 3
 #define F_DISPLAY_BLINK_FAST 15
 
-#define F_POWER_CALC 1
+/* should be an integer 1 <= f <= F_SYSTICK and an
+   integer divider of F_SYSTICK */
+#define F_POWER_CALC 100
 #define F_FAN 5
 
 #define F_UI_AUTODISPLAY 0.2
@@ -26,8 +27,20 @@
 #define CUR_MAX 10000 //mA
 #define POW_MIN 0 //mW
 #define POW_MAX 60000 //mW
-#define R_MIN 100 //mOhm
-#define R_MAX 60000 //mOhm
+#define POW_ABS_MAX 65000 //mW: Current at which the load current is reduced
+/* Usable range:
+  Rmin = 1V / 10A = 0.1 Ohm
+  Rmax = 30V / 0.2A = 150 Ohm
+*/
+#define R_MIN 10 //10*mOhm
+#define R_MAX 15000 //10*mOhm
+
+/* Defintion of t and m:
+   PWM = (current *  m - t) / 2^16
+   TODO: More efficient solution
+*/
+#define LOAD_CAL_T 8821987L
+#define LOAD_CAL_M 350445L
 
 /* Maximum: 64 */
 #define ADC_SAMPLES_PER_MEASUREMENT 64
@@ -65,7 +78,7 @@
 #define FAN_TEMPERATURE_OTP_LIMIT 850 // * 0.1°C
 #define FAN_TEMPERATURE_FULL 750 // * 0.1°C
 #define FAN_TEMPERATURE_LOW  350 // * 0.1°C
-#define FAN_ALWAYS_ON 1
+#define FAN_ALWAYS_ON 0
 #define FAN_SPEED_LOW ((uint16_t)(0xffff/50)) // PWM value. max: 0xffff
 #define FAN_SPEED_FULL 0xffff // PWM value. max: 0xffff
 

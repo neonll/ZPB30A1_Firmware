@@ -77,7 +77,7 @@ const NumericEdit menu_value_edit_CR = {
     .var = &settings.setpoints[MODE_CR],
     .min = R_MIN,
     .max = R_MAX,
-    .dot_offset = 3,
+    .dot_offset = 2,
 };
 
 const NumericEdit menu_value_edit_CW = {
