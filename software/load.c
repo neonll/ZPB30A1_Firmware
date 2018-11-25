@@ -46,6 +46,10 @@ static inline void load_update()
 {
     uint16_t setpoint = settings.setpoints[settings.mode];
     uint16_t current = 0;
+    static uint16_t last_current = 0;
+    static int16_t last_step_size = 1;
+    #define STEP_SIZE_MIN -200
+    #define STEP_SIZE_MAX 200
 
     if (calibration_step == CAL_CURRENT) {
         TIM1->CCR1H = calibration_value >> 8;
@@ -57,8 +61,49 @@ static inline void load_update()
             current = setpoint;
             break;
         case MODE_CV:
-            current = 0;
-            //TODO: Unsupported
+            if (!load_active) {
+                last_current = CUR_MIN;
+                last_step_size = STEP_SIZE_MAX/2; // fast start
+            }
+            uint16_t voltage = adc_get_voltage();
+            if (voltage < setpoint) {
+                //Current to high
+                if (last_step_size < 0) {
+                    if (last_step_size > STEP_SIZE_MIN) {
+                        last_step_size--;
+                    }
+                } else {
+                    //Last step was positive
+                    last_step_size = -1;
+                }
+                if (last_step_size > 0) {
+                    error = ERROR_INTERNAL;
+                }
+                if (last_current > CUR_MIN - last_step_size) {
+                    last_current += last_step_size / 16;
+                } else {
+                    last_current = CUR_MIN;
+                }
+            } else {
+                //Current to low
+                if (last_step_size > 0) {
+                    if (last_step_size < STEP_SIZE_MAX) {
+                        last_step_size++;
+                    }
+                } else {
+                    //Last step was negative
+                    last_step_size = 1;
+                }
+                if (last_step_size < 0) {
+                    error = ERROR_INTERNAL;
+                }
+                if (last_current < CUR_MAX - last_step_size) {
+                    last_current += last_step_size / 16;
+                } else {
+                    last_current = CUR_MAX;
+                }
+            }
+            current = last_current;
             break;
         case MODE_CR:
             //U[mV]/R[10mOhm]=I[mA]
