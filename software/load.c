@@ -39,7 +39,7 @@ void load_disable()
 void load_enable()
 {
     load_active = 1;
-    GPIOE->ODR &= ~PINE_ENABLE;
+    //actual activation happens in load_update()
 }
 
 static inline void load_update()
@@ -79,13 +79,23 @@ static inline void load_update()
     uint16_t current_power_limited = (uint32_t)(POW_ABS_MAX) * 1000 / v_load;
     if (current < CUR_MIN) current = CUR_MIN;
     if (current > CUR_MAX) current = CUR_MAX;
-    if (current > current_power_limited) current = current_power_limited;
+    if (settings.mode != MODE_CC && current > settings.current_limit) current = settings.current_limit;
+    if (load_active && (current > current_power_limited)) {
+        if (settings.max_power_action == MAX_P_LIM) {
+            current = current_power_limited;
+        } else {
+            error = ERROR_OVERLOAD;
+        }
+    }
     actual_current_setpoint = current;
 
     uint32_t tmp = current;
     tmp = tmp * LOAD_CAL_M - LOAD_CAL_T;
     TIM1->CCR1H = tmp >> 24;
     TIM1->CCR1L = tmp >> 16;
+
+    // Don't turn on load if an error condition is present
+    if (load_active && (error == ERROR_NONE)) GPIOE->ODR &= ~PINE_ENABLE;
 }
 
 static inline void load_calc_power()

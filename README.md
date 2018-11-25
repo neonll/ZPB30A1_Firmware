@@ -66,16 +66,22 @@ selected unit.
     * CW: Constant power
 * VAL: Sets the target value for the currently selected mode. The upper display
         shows the unit.
-* BEEP: Beeper on/off
-* CUTO: Undervoltage cutoff
-    * ENAB: Enable/disable
-    * CVAL: Cutoff value in Volt
+* ILIM: Current limit (not active in CC mode)
+* ...: More settings
+    * BEEP: Beeper on/off
+    * CUTO: Undervoltage cutoff
+        * ENAB: Enable/disable
+        * CVAL: Cutoff value in Volt
+    * MAXP: Maximum power action
+        * OFF: Turn off load when the required power would be greater than the hardware limit
+        * LIM: Reduce load current to stay within hardware limits
 
 ### Error codes
 * OVP: Over voltage protection. Voltage connected to P+/P- is too high. (Note: This function can only warn about voltages which are slightly to high. Large voltages will destroy the electronic load!)
-* LOAD: The load can't maintain the set value. Usually this means that the source can't deliver enough current or the source's voltage is to low.
+* OVLD: The load can't maintain the set value. Usually this means that the source can't deliver enough current or the source's voltage is to low.
+* PWR: Power required to maintain the setpoint is greater than hardware's power limit.
 * TEMP: Temperature is to high. Check if the fan is working and the thermistor is connected.
-* PWR: 12V input voltage is too low. Connect better power supply.
+* SUPPL: 12V input voltage is too low. Connect better power supply.
 * INT: Internal error. Should not happen. Check the source code where this error is set and try to fix it.
 
 ## Specifications

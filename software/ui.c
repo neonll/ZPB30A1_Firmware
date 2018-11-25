@@ -115,15 +115,15 @@ void ui_error_handler(uint8_t event, const MenuItem *item)
 {
 	(void) item; //Unused
 	if (event == EVENT_PREVIEW || event == EVENT_TIMER) return;
-	const char msgs[][5] = {"", "POL ", "OVP ", "LOAD", "TEMP", "PWR ", "TIME", "INT "};
+	const char msgs[][5] = {"", "POL ", "OVP ", "OVLD", "PWR", "TEMP", "SUPPL", "TIME", "INT "};
 	load_disable();
 	ui_text("ERR", DP_BOT);
 	ui_text(msgs[error], DP_TOP);
 	ui_set_display_mode(DISP_MODE_DIM, DP_TOP);
 	ui_set_display_mode(DISP_MODE_DIM, DP_BOT);
 	if (event == EVENT_ENCODER_BUTTON) {
-		error = ERROR_NONE;
 		ui_pop_item();
+		error = ERROR_NONE;
 	}
 }
 
@@ -430,6 +430,12 @@ void ui_active(uint8_t event, const MenuItem *item)
 {
 	(void) item; //unused
 	if (event & EVENT_PREVIEW) return; //Unsupported
+	if (event == EVENT_RUN_BUTTON ||
+		(event == EVENT_RETURN && error != ERROR_NONE)) {
+		load_disable();
+		ui_pop_item();
+		return;
+	}
 	if (event == EVENT_ENTER || event == EVENT_RETURN) {
 		load_enable();
 		ui_leds(0);
@@ -438,11 +444,7 @@ void ui_active(uint8_t event, const MenuItem *item)
 		ui_text("RUN ", DP_TOP);
 		ui_text("RUN ", DP_BOT);
 	}
-	if (event == EVENT_RUN_BUTTON) {
-		load_disable();
-		ui_pop_item();
-		return;
-	}
+
 }
 
 //TODO: Correctly handle bouncing encoder

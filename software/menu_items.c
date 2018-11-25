@@ -10,10 +10,13 @@ const MenuItem menu_main;
         static const MenuItem menu_mode_R;
         static const MenuItem menu_mode_P;
     static const MenuItem menu_value;
-    static const MenuItem menu_beep;
-    static const MenuItem menu_cutoff;
-        static const MenuItem menu_cutoff_enabled;
-        static const MenuItem menu_cutoff_value;
+    static const MenuItem menu_current_limit;
+    static const MenuItem menu_settings;
+        static const MenuItem menu_beep;
+        static const MenuItem menu_cutoff;
+            static const MenuItem menu_cutoff_enabled;
+            static const MenuItem menu_cutoff_value;
+        static const MenuItem menu_max_power_action;
 
 static const MenuItem menu_on = {
     .caption = "ON ",
@@ -29,8 +32,16 @@ static const MenuItem menu_off = {
 const MenuItem menu_main = {
     .caption = "Main",
     .handler = &ui_submenu,
-    .subitems = { &menu_mode, &menu_value, &menu_beep, &menu_cutoff, 0}
+    .subitems = { &menu_mode, &menu_value, &menu_current_limit, &menu_settings, 0}
 };
+
+static const MenuItem menu_settings = {
+    .caption = "...",
+    .handler = &ui_submenu,
+    .subitems = { &menu_beep, &menu_cutoff, &menu_max_power_action, 0}
+};
+
+
 
 static const MenuItem menu_mode = {
     .caption = "MODE",
@@ -114,8 +125,8 @@ static const MenuItem menu_cutoff_enabled = {
 
 static const NumericEdit menu_cutoff_value_edit = {
     .var = &settings.cutoff_voltage,
-    .min = 0, //mV
-    .max = 30000, //mV
+    .min = VOLT_MIN,
+    .max = VOLT_MAX,
     .dot_offset = 3,
 };
 
@@ -124,6 +135,32 @@ static const MenuItem menu_cutoff_value = {
     .handler = &ui_edit_value,
     .data = &menu_cutoff_value_edit,
     .value = LED_V
+};
+
+static const NumericEdit menu_current_limit_edit = {
+    .var = &settings.current_limit,
+    .min = CUR_MIN,
+    .max = CUR_MAX,
+    .dot_offset = 3,
+};
+
+static const MenuItem menu_current_limit = {
+    .caption = "ILIM",
+    .handler = &ui_edit_value,
+    .data = &menu_current_limit_edit,
+    .value = LED_A,
+};
+
+static const MenuItem menu_lim = {
+    .caption = "LIM ",
+    .value = 1
+};
+
+static const MenuItem menu_max_power_action = {
+    .caption = "MAXP",
+    .handler = &ui_select_item,
+    .data = &settings.max_power_action,
+    .subitems = {&menu_off,  &menu_lim,  0}
 };
 
 const MenuItem menu_active = {

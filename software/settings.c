@@ -1,11 +1,12 @@
 #include "settings.h"
 #include "eeprom.h"
 #include "timer.h"
+#include "config.h"
 settings_t settings;
 
 /* Note: The checksum is placed after the data so when the settings size grows
    The checksum automatically becomes invalid. */
-
+//TODO: Seems to be broken. Needs testing.
 static uint8_t settings_calc_checksum(uint8_t *data, uint16_t size)
 {
     uint16_t i;
@@ -36,6 +37,8 @@ void settings_init()
         settings.beeper_enabled = 1;
         settings.cutoff_enabled = 0;
         settings.cutoff_voltage = 3300;
+        settings.current_limit = CUR_MAX;
+        settings.max_power_action = MAX_P_LIM;
     }
 }
 

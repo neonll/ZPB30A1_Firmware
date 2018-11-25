@@ -9,7 +9,8 @@ typedef enum {
 	ERROR_NONE,
 	ERROR_POLARITY, // input polarity reversed
 	ERROR_OVERVOLTAGE, // input voltage to high
-	ERROR_OVERLOAD,
+	ERROR_OVERLOAD, // input can't supply the required current
+	ERROR_MAX_POWER, // power > POW_ABS_MAX and max_power_action == MAX_P_OFF
 	ERROR_OVERTEMPERATURE, // heat sink temperature to high
 	ERROR_POWER_SUPPLY, // supply voltage to low
 	ERROR_TIMER_OVERFLOW, // timer tick lost

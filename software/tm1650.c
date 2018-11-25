@@ -101,6 +101,10 @@ void disp_write(uint8_t addr, uint8_t data, uint8_t pin)
 
 void disp_char(uint8_t position, uint8_t c, uint8_t dot, uint8_t pin)
 {
+	if (c == '.') {
+		c = ' ';
+		dot = 1;
+	}
 	if (c == ' ') {
 		c = '@';
 	}
