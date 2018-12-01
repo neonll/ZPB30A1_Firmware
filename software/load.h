@@ -24,6 +24,7 @@ typedef enum {
 } calibration_t;
 
 extern bool load_active;
+extern bool load_regulated;
 extern uint16_t current_setpoint;
 extern calibration_t calibration_step;
 extern uint16_t calibration_value;

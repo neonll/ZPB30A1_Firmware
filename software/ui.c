@@ -115,7 +115,7 @@ void ui_error_handler(uint8_t event, const MenuItem *item)
 {
 	(void) item; //Unused
 	if (event == EVENT_PREVIEW || event == EVENT_TIMER) return;
-	const char msgs[][5] = {"", "POL ", "OVP ", "OVLD", "PWR", "TEMP", "SUPPL", "TIME", "INT "};
+	const char msgs[][5] = {"", "POL ", "OVP ", "OVLD", "PWR", "TEMP", "SUP ", "TIME", "INT "};
 	load_disable();
 	ui_text("ERR", DP_BOT);
 	ui_text(msgs[error], DP_TOP);
@@ -430,6 +430,9 @@ void ui_active(uint8_t event, const MenuItem *item)
 {
 	(void) item; //unused
 	if (event & EVENT_PREVIEW) return; //Unsupported
+	if (event & EVENT_TIMER) {
+		ui_leds(0); //Update run led
+	}
 	if (event == EVENT_RUN_BUTTON ||
 		(event == EVENT_RETURN && error != ERROR_NONE)) {
 		load_disable();

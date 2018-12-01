@@ -7,6 +7,7 @@
 uint32_t mAmpere_seconds = 0;
 uint32_t mWatt_seconds = 0;
 bool load_active = 0;
+bool load_regulated = 0;
 error_t error = ERROR_NONE;
 calibration_t calibration_step;
 uint16_t calibration_value;
@@ -46,6 +47,7 @@ static inline void load_update()
 {
     uint16_t setpoint = settings.setpoints[settings.mode];
     uint16_t current = 0;
+    uint16_t voltage = adc_get_voltage();
     static uint16_t last_current = 0;
     static int16_t last_step_size = 1;
     #define STEP_SIZE_MIN -200
@@ -65,7 +67,7 @@ static inline void load_update()
                 last_current = CUR_MIN;
                 last_step_size = STEP_SIZE_MAX/2; // fast start
             }
-            uint16_t voltage = adc_get_voltage();
+
             if (voltage < setpoint) {
                 //Current to high
                 if (last_step_size < 0) {
@@ -109,13 +111,13 @@ static inline void load_update()
             //U[mV]/R[10mOhm]=I[mA]
             //U*1000 * c / R*100 = I * 1000
             // => c = 100
-            current = (uint32_t)adc_get_voltage() * 100 / setpoint;
+            current = (uint32_t)voltage * 100 / setpoint;
             break;
         case MODE_CW:
             //P[mW]/U[mV] = I[mA]
             //P*1000 * c / U*1000 = I * 1000
             // => c = 1000
-            current = (uint32_t)setpoint * 1000 / adc_get_voltage();
+            current = (uint32_t)setpoint * 1000 / voltage;
             break;
     }
     /* NOTE: Here v_load is used directly instead of adc_get_voltage, because
@@ -138,6 +140,16 @@ static inline void load_update()
     tmp = tmp * LOAD_CAL_M - LOAD_CAL_T;
     TIM1->CCR1H = tmp >> 24;
     TIM1->CCR1L = tmp >> 16;
+
+    if (settings.cutoff_enabled && voltage < settings.cutoff_voltage) {
+        load_disable();
+    }
+
+    load_regulated = true; //TODO: Check if load is within limits depending on mode
+    //Can't maintain the set output voltage
+    if (!(GPIOC->IDR & PINC_OL_DETECT)) {
+        load_regulated = false;
+    }
 
     // Don't turn on load if an error condition is present
     if (load_active && (error == ERROR_NONE)) GPIOE->ODR &= ~PINE_ENABLE;
@@ -169,8 +181,10 @@ static inline void load_calc_power()
 
 void load_timer()
 {
+
     if (load_active) {
         load_calc_power();
     }
+    // Load updates always run all maximum frequency
     load_update();
 }

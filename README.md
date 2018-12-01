@@ -81,7 +81,7 @@ selected unit.
 * OVLD: The load can't maintain the set value. Usually this means that the source can't deliver enough current or the source's voltage is to low.
 * PWR: Power required to maintain the setpoint is greater than hardware's power limit.
 * TEMP: Temperature is to high. Check if the fan is working and the thermistor is connected.
-* SUPPL: 12V input voltage is too low. Connect better power supply.
+* SUP: 12V input voltage is too low. Connect better power supply.
 * INT: Internal error. Should not happen. Check the source code where this error is set and try to fix it.
 
 ## Specifications
