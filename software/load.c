@@ -168,10 +168,10 @@ static inline void load_calc_power()
         timer = 0;
         uint32_t power = actual_current_setpoint;
         power *= adc_get_voltage();
-        power /= 1000;
-        power += power_remainder; //Keep track of rounding errors
-        power_remainder = power % F_POWER_CALC;
-        mWatt_seconds += power / F_POWER_CALC;
+        uint16_t power16 = power / 1000;
+        power16 += power_remainder; //Keep track of rounding errors
+        power_remainder = power16 % F_POWER_CALC;
+        mWatt_seconds += power16 / F_POWER_CALC;
 
         uint16_t current = actual_current_setpoint + current_remainder;
         current_remainder = current % F_POWER_CALC;
