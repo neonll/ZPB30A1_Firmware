@@ -167,7 +167,7 @@ static inline void load_calc_power()
     if (timer == F_SYSTICK/F_POWER_CALC) {
         timer = 0;
         uint32_t power = actual_current_setpoint;
-        power *= v_sense;
+        power *= adc_get_voltage();
         power /= 1000;
         power += power_remainder; //Keep track of rounding errors
         power_remainder = power % F_POWER_CALC;
