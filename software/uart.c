@@ -47,9 +47,9 @@ void uart_timer()
 		} else if (cnt == 6) {
 			printf("I %5u ", actual_current_setpoint);
 		} else if (cnt == 7) {
-			printf("mWs %10u ", mWatt_seconds);
+			printf("mWs %10lu ", mWatt_seconds);
 		} else if (cnt == 8) {
-			printf("mAs %10u ", mAmpere_seconds);
+			printf("mAs %10lu ", mAmpere_seconds);
 		} else {
 			printf("\r\n");
 			cnt = 0;
