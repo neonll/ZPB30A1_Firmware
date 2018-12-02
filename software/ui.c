@@ -11,6 +11,7 @@
 #include "stdio.h" //Debugging only
 #include "inc/stm8s_gpio.h"
 #include "inc/stm8s_itc.h"
+#include "adc.h"
 
 typedef enum {
 	/* Bitmask:
@@ -426,12 +427,50 @@ void ui_edit_setpoint(uint8_t event, const MenuItem *item)
 	if (edit) ui_edit_value_internal(event, edit, leds);
 }
 
+void ui_show_top_value()
+{
+	static uint16_t switch_timer = 0;
+	static uint8_t update_timer = 0;
+	enum {
+		STATE_V,
+		STATE_AH,
+		STATE_WH,
+		STATE_MAX,
+	};
+	static uint8_t state = STATE_V;
+
+    if (++switch_timer == F_SYSTICK/F_UI_SWITCH_DISPLAY) {
+        switch_timer = 0;
+		if (++state == STATE_MAX) state = STATE_V;
+	}
+	if (++update_timer == F_SYSTICK/F_UI_UPDATE_DISPLAY) {
+		update_timer = 0;
+		switch (state) {
+			case STATE_V:
+				ui_leds(LED_A|LED_V); //Update run led
+				ui_number(adc_get_voltage(), VOLT_DOT_OFFSET, DP_TOP);
+				break;
+			case STATE_AH:
+				ui_leds(LED_A|LED_AH);
+				ui_number(mAmpere_seconds/3600, AS_DOT_OFFSET, DP_TOP);
+				break;
+			case STATE_WH:
+				ui_leds(LED_A|LED_WH);
+				ui_number(mWatt_seconds/3600, WS_DOT_OFFSET, DP_TOP);
+				break;
+		}
+	}
+}
+
 void ui_active(uint8_t event, const MenuItem *item)
 {
 	(void) item; //unused
+	//TODO: Play alarm on discharge complete/or on under voltage
+	//TODO: Play alarm on out of regulation errors
 	if (event & EVENT_PREVIEW) return; //Unsupported
 	if (event & EVENT_TIMER) {
-		ui_leds(0); //Update run led
+		ui_show_top_value();
+		ui_number(actual_current_setpoint, CUR_DOT_OFFSET, DP_BOT);
 	}
 	if (event == EVENT_RUN_BUTTON ||
 		(event == EVENT_RETURN && error != ERROR_NONE)) {
@@ -441,11 +480,8 @@ void ui_active(uint8_t event, const MenuItem *item)
 	}
 	if (event == EVENT_ENTER || event == EVENT_RETURN) {
 		load_enable();
-		ui_leds(0);
 		ui_set_display_mode(DISP_MODE_DIM, DP_TOP);
 		ui_set_display_mode(DISP_MODE_DIM, DP_BOT);
-		ui_text("RUN ", DP_TOP);
-		ui_text("RUN ", DP_BOT);
 	}
 
 }

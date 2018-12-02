@@ -74,28 +74,28 @@ const NumericEdit menu_value_edit_CC = {
     .var = &settings.setpoints[MODE_CC],
     .min = CUR_MIN,
     .max = CUR_MAX,
-    .dot_offset = 3,
+    .dot_offset = CUR_DOT_OFFSET,
 };
 
 const NumericEdit menu_value_edit_CV = {
     .var = &settings.setpoints[MODE_CV],
     .min = VOLT_MIN,
     .max = VOLT_MAX,
-    .dot_offset = 3,
+    .dot_offset = VOLT_DOT_OFFSET,
 };
 
 const NumericEdit menu_value_edit_CR = {
     .var = &settings.setpoints[MODE_CR],
     .min = R_MIN,
     .max = R_MAX,
-    .dot_offset = 2,
+    .dot_offset = R_DOT_OFFSET,
 };
 
 const NumericEdit menu_value_edit_CW = {
     .var = &settings.setpoints[MODE_CW],
     .min = POW_MIN,
     .max = POW_MAX,
-    .dot_offset = 3,
+    .dot_offset = POW_DOT_OFFSET,
 };
 
 static const MenuItem menu_value = {
@@ -127,7 +127,7 @@ static const NumericEdit menu_cutoff_value_edit = {
     .var = &settings.cutoff_voltage,
     .min = VOLT_MIN,
     .max = VOLT_MAX,
-    .dot_offset = 3,
+    .dot_offset = VOLT_DOT_OFFSET,
 };
 
 static const MenuItem menu_cutoff_value = {
@@ -141,7 +141,7 @@ static const NumericEdit menu_current_limit_edit = {
     .var = &settings.current_limit,
     .min = CUR_MIN,
     .max = CUR_MAX,
-    .dot_offset = 3,
+    .dot_offset = CUR_DOT_OFFSET,
 };
 
 static const MenuItem menu_current_limit = {

@@ -16,24 +16,35 @@
 #define F_POWER_CALC 100
 #define F_FAN 5
 
-#define F_UI_AUTODISPLAY 0.2
+#define F_UI_SWITCH_DISPLAY 0.2
+#define F_UI_UPDATE_DISPLAY 2
 #define F_BEEP_ERROR 2
 #define F_BEEP_KHZ 1 // 1, 2 or 4
 #define F_LOG 5
 
 #define VOLT_MIN 500 //mV
 #define VOLT_MAX 30000 //mV
+#define VOLT_DOT_OFFSET 3
+
 #define CUR_MIN 200 //mA
 #define CUR_MAX 10000 //mA
+#define CUR_DOT_OFFSET 3
+
 #define POW_MIN 0 //mW
-#define POW_MAX 60000 //mW
+#define POW_MAX 60000 //mW: maximum settable power
+#define POW_DOT_OFFSET 3
 #define POW_ABS_MAX 65000 //mW: Current at which the load current is reduced
+
 /* Usable range:
   Rmin = 1V / 10A = 0.1 Ohm
   Rmax = 30V / 0.2A = 150 Ohm
 */
 #define R_MIN 10 //10*mOhm
 #define R_MAX 15000 //10*mOhm
+#define R_DOT_OFFSET 2
+
+#define AS_DOT_OFFSET 3
+#define WS_DOT_OFFSET 3
 
 /* Defintion of t and m:
    PWM = (current *  m - t) / 2^16
