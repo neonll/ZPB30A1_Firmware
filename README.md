@@ -1,6 +1,17 @@
 # ZPB30A1 Firmware
-
 This repository is there to build an open-source firmware for the 60W ZPB30A1 electronic load (often sold as "60W electronic load" without any article number).
+
+## Features
+* Modes
+    * CC: Constant current
+    * CR: Constant resistance
+    * CP: Constant power
+    * CV: Constant voltage (slow regulation due to hardware limitations)
+* Easily usable menu system with many configuration options
+* Logging of all operating parameters via UART.
+* Much better accuracy than stock firmware.
+* Clean firmware structure for easy extendability.
+
 
 ## Original Firmware
 The original firmware has read out protection enabled. Therefore you can't go
