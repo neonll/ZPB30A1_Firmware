@@ -9,7 +9,7 @@ const MenuItem menu_main;
         static const MenuItem menu_mode_CV;
         static const MenuItem menu_mode_R;
         static const MenuItem menu_mode_P;
-    static const MenuItem menu_value;
+    const MenuItem menu_value;
     static const MenuItem menu_current_limit;
     static const MenuItem menu_settings;
         static const MenuItem menu_beep;
@@ -98,7 +98,7 @@ const NumericEdit menu_value_edit_CW = {
     .dot_offset = POW_DOT_OFFSET,
 };
 
-static const MenuItem menu_value = {
+const MenuItem menu_value = {
     .caption = "VAL ",
     .handler = &ui_edit_setpoint,
 };

@@ -427,10 +427,11 @@ void ui_edit_setpoint(uint8_t event, const MenuItem *item)
 	if (edit) ui_edit_value_internal(event, edit, leds);
 }
 
-void ui_show_top_value()
+void ui_show_top_value(uint8_t event)
 {
 	static uint16_t switch_timer = 0;
 	static uint8_t update_timer = 0;
+	static bool manual_mode = false;
 	enum {
 		STATE_V,
 		STATE_AH,
@@ -438,12 +439,32 @@ void ui_show_top_value()
 		STATE_MAX,
 	};
 	static uint8_t state = STATE_V;
+	bool update = false;
 
-    if (++switch_timer == F_SYSTICK/F_UI_SWITCH_DISPLAY) {
+	if (event == EVENT_ENTER || event == EVENT_RETURN)
+	{
+		switch_timer = 0;
+		update_timer = F_SYSTICK/F_UI_UPDATE_DISPLAY - 1;
+		manual_mode = 0;
+	}
+
+	if (event == EVENT_ENCODER_UP) {
+		manual_mode = true;
+		update = true;
+		if (++state == STATE_MAX) state = STATE_V;
+	}
+	if (event == EVENT_ENCODER_DOWN) {
+		manual_mode = true;
+		update = true;
+		if (state-- == STATE_V) state = STATE_MAX - 1;
+	}
+
+    if (!manual_mode && (++switch_timer == F_SYSTICK/F_UI_SWITCH_DISPLAY)) {
         switch_timer = 0;
 		if (++state == STATE_MAX) state = STATE_V;
 	}
-	if (++update_timer == F_SYSTICK/F_UI_UPDATE_DISPLAY) {
+	if (((event == EVENT_TIMER) && (++update_timer == F_SYSTICK/F_UI_UPDATE_DISPLAY)) ||
+		 update) {
 		update_timer = 0;
 		switch (state) {
 			case STATE_V:
@@ -468,8 +489,8 @@ void ui_active(uint8_t event, const MenuItem *item)
 	//TODO: Play alarm on discharge complete/or on under voltage
 	//TODO: Play alarm on out of regulation errors
 	if (event & EVENT_PREVIEW) return; //Unsupported
+	ui_show_top_value(event);
 	if (event & EVENT_TIMER) {
-		ui_show_top_value();
 		ui_number(actual_current_setpoint, CUR_DOT_OFFSET, DP_BOT);
 	}
 	if (event == EVENT_RUN_BUTTON ||
@@ -482,6 +503,10 @@ void ui_active(uint8_t event, const MenuItem *item)
 		load_enable();
 		ui_set_display_mode(DISP_MODE_DIM, DP_TOP);
 		ui_set_display_mode(DISP_MODE_DIM, DP_BOT);
+	}
+
+	if (event == EVENT_ENCODER_BUTTON) {
+		ui_push_item(&menu_value);
 	}
 
 }

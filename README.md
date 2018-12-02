@@ -76,6 +76,14 @@ selected unit.
         * OFF: Turn off load when the required power would be greater than the hardware limit
         * LIM: Reduce load current to stay within hardware limits
 
+## Run mode
+While in run mode the top display show V, Ah, or Wh. The bottom display show
+the current.
+The unit in the top display switches automatically after some seconds. Rotating the encoder
+changes the unit manually and disables automatic switching.
+Pressing the encoder enters a menu to change the current setpoint without exiting
+run mode. 
+
 ### Error codes
 * OVP: Over voltage protection. Voltage connected to P+/P- is too high. (Note: This function can only warn about voltages which are slightly to high. Large voltages will destroy the electronic load!)
 * OVLD: The load can't maintain the set value. Usually this means that the source can't deliver enough current or the source's voltage is to low.
