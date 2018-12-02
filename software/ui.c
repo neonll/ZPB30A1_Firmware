@@ -125,10 +125,10 @@ static void ui_timer_beeper()
 	uint8_t timer_value = 0;
 	static uint8_t timer = 0;
 	if (load_disable_reason == DISABLE_CUTOFF) {
-		timer_value = F_SYSTICK / 10;
+		timer_value = F_SYSTICK / F_BEEP_CUTOFF;
 	}
 	if (error) {
-		timer_value = F_SYSTICK / 20;
+		timer_value = F_SYSTICK / F_BEEP_ERROR;
 	}
 	if (!timer_value) {
 		if (encoder_val) {

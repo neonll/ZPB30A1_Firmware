@@ -9,15 +9,15 @@
 
 #define F_DISPLAY_BLINK_SLOW 3
 #define F_DISPLAY_BLINK_FAST 15
+#define F_UI_SWITCH_DISPLAY 0.2
+#define F_UI_UPDATE_DISPLAY 2
 
-/* should be an integer 1 <= f <= F_SYSTICK and an
+/* F_POWER_CALC must be an integer 1 <= f <= F_SYSTICK and an
    integer divider of F_SYSTICK */
 #define F_POWER_CALC 100
 #define F_FAN 5
-
-#define F_UI_SWITCH_DISPLAY 0.2
-#define F_UI_UPDATE_DISPLAY 2
 #define F_BEEP_ERROR 2
+#define F_BEEP_CUTOFF 5
 #define F_BEEP_KHZ 1 // 1, 2 or 4
 #define F_LOG 5
 
