@@ -82,7 +82,7 @@ the current.
 The unit in the top display switches automatically after some seconds. Rotating the encoder
 changes the unit manually and disables automatic switching.
 Pressing the encoder enters a menu to change the current setpoint without exiting
-run mode. 
+run mode.
 
 ### Error codes
 * OVP: Over voltage protection. Voltage connected to P+/P- is too high. (Note: This function can only warn about voltages which are slightly to high. Large voltages will destroy the electronic load!)
@@ -92,21 +92,13 @@ run mode.
 * SUP: 12V input voltage is too low. Connect better power supply.
 * INT: Internal error. Should not happen. Check the source code where this error is set and try to fix it.
 
-## Specifications
-
-| Param           | Range    | Value
-| --------------- | -------- | ---
-| Voltage Input   | 0-30 V   | ± 0.3% ± 20 mV (oversampling the 10 bit ADC to get 12 fake bit)
-| Current control | 0-10 A   | ± 0.1% ± 1 mA
-| Temperature     | 30-90°C  | ± 1.5 °C
-
 ## History
 This firmware started as a project to extend the firmware written by
-(soundstorm)[https://github.com/ArduinoHannover/ZPB30A1_Firmware] but it turned
+[soundstorm](https://github.com/ArduinoHannover/ZPB30A1_Firmware) but it turned
 out as an almost complete rewrite which keeps the user interface idea.
 
 ## Schematic
-Schematic can be found in hardware/schematic.pdf.
+Schematic can be found in [hardware/schematic.pdf].
 
 ### Schematic corrections:
 * R5 = 10k

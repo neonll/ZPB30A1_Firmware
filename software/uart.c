@@ -61,4 +61,6 @@ void uart_timer()
 void uart_rx_irq() __interrupt(ITC_IRQ_UART2_RX)
 {
 	char tmp = UART2->DR;
+	//TODO: Calibration mode
+	//TODO: Remote control
 }
