@@ -76,15 +76,6 @@ void ui_init()
 	ui_push_item(&menu_main);
 }
 
-static void ui_timer_redraw()
-{
-	static uint16_t timer = 0;
-	timer++;
-	if (timer == F_SYSTICK/F_DISPLAY_REDRAW) {
-		timer = 0;
-	}
-}
-
 static void ui_blink(uint8_t mode)
 {
 	for (uint8_t i=0; i<2; i++)
@@ -156,7 +147,6 @@ static void ui_timer_beeper()
 
 void ui_timer()
 {
-	ui_timer_redraw();
 	ui_timer_blink();
 	ui_timer_beeper();
 	if (error && current_item != &menu_error) {

@@ -7,7 +7,6 @@
 
 #define BAUDR 115200L
 
-#define F_DISPLAY_REDRAW 2
 #define F_DISPLAY_BLINK_SLOW 3
 #define F_DISPLAY_BLINK_FAST 15
 
