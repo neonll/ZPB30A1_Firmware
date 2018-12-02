@@ -439,7 +439,7 @@ void ui_edit_setpoint(uint8_t event, const MenuItem *item)
 	if (edit) ui_edit_value_internal(event, edit, leds);
 }
 
-void ui_show_top_value(uint8_t event)
+void ui_show_values(uint8_t event)
 {
 	static uint16_t switch_timer = 0;
 	static uint8_t update_timer = 0;
@@ -492,6 +492,7 @@ void ui_show_top_value(uint8_t event)
 				ui_number(mWatt_seconds/3600, WS_DOT_OFFSET, DP_TOP);
 				break;
 		}
+		ui_number(actual_current_setpoint, CUR_DOT_OFFSET, DP_BOT);
 	}
 }
 
@@ -499,10 +500,7 @@ void ui_active(uint8_t event, const MenuItem *item)
 {
 	(void) item; //unused
 	if (event & EVENT_PREVIEW) return; //Unsupported
-	ui_show_top_value(event);
-	if (event & EVENT_TIMER) {
-		ui_number(actual_current_setpoint, CUR_DOT_OFFSET, DP_BOT);
-	}
+	ui_show_values(event);
 	if (event == EVENT_RUN_BUTTON ||
 		(event == EVENT_RETURN && error != ERROR_NONE)) {
 		load_disable(DISABLE_USER);
