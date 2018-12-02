@@ -21,7 +21,7 @@
 #define F_BEEP_KHZ 1 // 1, 2 or 4
 #define F_LOG 5
 
-#define VOLT_MIN 1000 //mV
+#define VOLT_MIN 500 //mV
 #define VOLT_MAX 30000 //mV
 #define CUR_MIN 200 //mA
 #define CUR_MAX 10000 //mA
@@ -79,7 +79,7 @@
 #define FAN_TEMPERATURE_FULL 750 // * 0.1°C
 #define FAN_TEMPERATURE_LOW  400 // * 0.1°C
 #define FAN_ON_OFF_HYSTERESIS 50 // * 0.1°C
-#define FAN_ALWAYS_ON 1
+#define FAN_ALWAYS_ON 0
 #define FAN_PWM_MAX 0xfff
 #define FAN_SPEED_LOW ((uint16_t)(FAN_PWM_MAX/20)) // PWM value
 #define FAN_SPEED_FULL FAN_PWM_MAX // PWM value. max: 0xffff
