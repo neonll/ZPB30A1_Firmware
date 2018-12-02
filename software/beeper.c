@@ -7,7 +7,6 @@
 void beeper_init()
 {
     // Unlock flash
-    //TODO: Is unlocked flash required elsewhere as well?
     FLASH->DUKR = FLASH_RASS_KEY2;
     FLASH->DUKR = FLASH_RASS_KEY1;
     while (!(FLASH->IAPSR & FLASH_IAPSR_DUL));

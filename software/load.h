@@ -23,8 +23,15 @@ typedef enum {
 	CAL_CURRENT,
 } calibration_t;
 
+typedef enum {
+	DISABLE_USER,
+	DISABLE_ERROR,
+	DISABLE_CUTOFF,
+} disable_reason_t;
+
 extern bool load_active;
 extern bool load_regulated;
+extern uint8_t load_disable_reason;
 extern uint16_t current_setpoint;
 extern calibration_t calibration_step;
 extern uint16_t calibration_value;
@@ -38,6 +45,6 @@ extern uint32_t mWatt_seconds;
 void load_init();
 void load_timer();
 void load_enable();
-void load_disable();
+void load_disable(uint8_t reason);
 
 #endif

@@ -8,6 +8,7 @@ uint32_t mAmpere_seconds = 0;
 uint32_t mWatt_seconds = 0;
 bool load_active = 0;
 bool load_regulated = 0;
+uint8_t load_disable_reason = DISABLE_USER;
 error_t error = ERROR_NONE;
 calibration_t calibration_step;
 uint16_t calibration_value;
@@ -31,9 +32,9 @@ void load_init()
 	TIM1->BKR = TIM1_BKR_MOE;
 }
 
-void load_disable()
+void load_disable(uint8_t reason)
 {
-    //TODO: Log shutdown reason
+    load_disable_reason = reason;
     load_active = 0;
     GPIOE->ODR |= PINE_ENABLE;
 }
@@ -142,8 +143,8 @@ static inline void load_update()
     TIM1->CCR1H = tmp >> 24;
     TIM1->CCR1L = tmp >> 16;
 
-    if (settings.cutoff_enabled && voltage < settings.cutoff_voltage) {
-        load_disable();
+    if (load_active && settings.cutoff_enabled && voltage < settings.cutoff_voltage) {
+        load_disable(DISABLE_CUTOFF);
     }
 
     load_regulated = true; //TODO: Check if load is within limits depending on mode

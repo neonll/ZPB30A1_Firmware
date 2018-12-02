@@ -75,7 +75,6 @@ void main(void) {
 	while (1) {
 		if (systick_flag & SYSTICK_OVERFLOW)
 		{
-			load_disable();
 			error = ERROR_TIMER_OVERFLOW;
 			systick_flag &= ~SYSTICK_OVERFLOW;
 		}

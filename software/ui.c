@@ -117,7 +117,7 @@ void ui_error_handler(uint8_t event, const MenuItem *item)
 	(void) item; //Unused
 	if (event == EVENT_PREVIEW || event == EVENT_TIMER) return;
 	const char msgs[][5] = {"", "POL ", "OVP ", "OVLD", "PWR", "TEMP", "SUP ", "TIME", "INT "};
-	load_disable();
+	load_disable(DISABLE_ERROR);
 	ui_text("ERR", DP_BOT);
 	ui_text(msgs[error], DP_TOP);
 	ui_set_display_mode(DISP_MODE_DIM, DP_TOP);
@@ -128,15 +128,37 @@ void ui_error_handler(uint8_t event, const MenuItem *item)
 	}
 }
 
+
+static void ui_timer_beeper()
+{
+	uint8_t timer_value = 0;
+	static uint8_t timer = 0;
+	if (load_disable_reason == DISABLE_CUTOFF) {
+		timer_value = F_SYSTICK / 10;
+	}
+	if (error) {
+		timer_value = F_SYSTICK / 20;
+	}
+	if (!timer_value) {
+		if (encoder_val) {
+			beeper_on();
+			_delay_us(30);
+		}
+		beeper_off();
+		timer = 0;
+		return;
+	}
+	if (++timer >= timer_value) {
+		timer = 0;
+		beeper_toggle();
+	}
+}
+
 void ui_timer()
 {
 	ui_timer_redraw();
 	ui_timer_blink();
-	if (encoder_val) {
-		beeper_on();
-		_delay_us(30);
-		beeper_off();
-	}
+	ui_timer_beeper();
 	if (error && current_item != &menu_error) {
 		ui_push_item(&menu_error);
 	}
@@ -486,8 +508,6 @@ void ui_show_top_value(uint8_t event)
 void ui_active(uint8_t event, const MenuItem *item)
 {
 	(void) item; //unused
-	//TODO: Play alarm on discharge complete/or on under voltage
-	//TODO: Play alarm on out of regulation errors
 	if (event & EVENT_PREVIEW) return; //Unsupported
 	ui_show_top_value(event);
 	if (event & EVENT_TIMER) {
@@ -495,7 +515,7 @@ void ui_active(uint8_t event, const MenuItem *item)
 	}
 	if (event == EVENT_RUN_BUTTON ||
 		(event == EVENT_RETURN && error != ERROR_NONE)) {
-		load_disable();
+		load_disable(DISABLE_USER);
 		ui_pop_item();
 		return;
 	}
