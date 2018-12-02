@@ -33,6 +33,7 @@ void load_init()
 
 void load_disable()
 {
+    //TODO: Log shutdown reason
     load_active = 0;
     GPIOE->ODR |= PINE_ENABLE;
 }
@@ -163,6 +164,10 @@ static inline void load_calc_power()
     #if F_SYSTICK % F_POWER_CALC != 0
         #error "F_POWER_CALC must be an integer divider of F_SYSTICK"
     #endif
+    if (!load_active || !load_regulated) {
+        // Don't update readings when the values are unknown
+        return;
+    }
     timer++;
     if (timer == F_SYSTICK/F_POWER_CALC) {
         timer = 0;
@@ -181,10 +186,7 @@ static inline void load_calc_power()
 
 void load_timer()
 {
-
-    if (load_active) {
-        load_calc_power();
-    }
+    load_calc_power();
     // Load updates always run all maximum frequency
     load_update();
 }
