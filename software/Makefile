@@ -67,7 +67,7 @@ unlock_windows:
 	@echo "Unlocking is currently unsupported on windows"
 	false
 
-unlock_uinx:
+unlock_unix:
 	$(STM8FLASH) -c $(PROGRAMMER) -p $(PROCESSOR) -u # Works in stm8flash versions after git commit f3f547b4
 
 clear_eeprom_unix: empty_eeprom
