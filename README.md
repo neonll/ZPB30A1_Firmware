@@ -28,7 +28,7 @@ version 3.8 or higher (3.7 sometimes crashes during compilation).
 The datasheet of the STM8S005 claims a write endurance of only 100 flash cycles
 but this is only for marketing purposes as it [contains the same die](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-gadgets/log/76731-stm8l001j3-a-new-sop8-chip-and-the-limits-of-stm8flash)
 as the STM8S105 which is rated for 10000 cycles. So you don't have to worry
-about bricking you device by flashing it to often. Mine has far more than 100
+about bricking your device by flashing it too often. Mine has far more than 100
 cycles and still works. You can easily verify the two chips are the same as you
 can write the whole 1kB of EEPROM the STM8S105 has instead of only 128 bytes
 as claimed by the STM8S005 datasheet.
