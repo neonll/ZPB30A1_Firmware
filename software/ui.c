@@ -73,6 +73,10 @@ void ui_init()
 	ui_set_display_mode(DISP_MODE_BRIGHT, DP_TOP);
 	ui_set_display_mode(DISP_MODE_BRIGHT, DP_BOT);
 	menu_stack_head = 0;
+	// Reset all button events which might have triggered before the system was fully initialized.
+	run_pressed = 0; 
+	encoder_val = 0;
+	encoder_pressed = 0;
 	ui_push_item(&menu_main);
 }
 
