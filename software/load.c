@@ -19,17 +19,17 @@ void load_init()
     #define PWM_RELOAD (F_CPU / F_PWM)
     // I-SET
     // Low pass is <8 Hz, so we can use full 16 bit resolution (~244Hz).
-	TIM1->ARRH = 0xff;
-	TIM1->ARRL = 0xff;
-	TIM1->PSCRH = 0;
-	TIM1->PSCRL = 0;
+    TIM1->ARRH = 0xff;
+    TIM1->ARRL = 0xff;
+    TIM1->PSCRH = 0;
+    TIM1->PSCRL = 0;
 
-	TIM1->CCMR1 = TIM1_OCMODE_PWM1 | TIM1_CCMR_OCxPE;
-	TIM1->CCER1 = TIM1_CCER1_CC1E;
-	TIM1->CCR1H = 0;
-	TIM1->CCR1L = 0;
-	TIM1->CR1 = TIM1_CR1_CEN;
-	TIM1->BKR = TIM1_BKR_MOE;
+    TIM1->CCMR1 = TIM1_OCMODE_PWM1 | TIM1_CCMR_OCxPE;
+    TIM1->CCER1 = TIM1_CCER1_CC1E;
+    TIM1->CCR1H = 0;
+    TIM1->CCR1L = 0;
+    TIM1->CR1 = TIM1_CR1_CEN;
+    TIM1->BKR = TIM1_BKR_MOE;
 }
 
 void load_disable(uint8_t reason)

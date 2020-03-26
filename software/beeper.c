@@ -23,7 +23,7 @@ void beeper_init()
 
         while (!(FLASH->IAPSR & FLASH_IAPSR_EOP)); // wait for write finish
 
-        FLASH->CR2 &= ~FLASH_CR2_OPT;	// lock back
+        FLASH->CR2 &= ~FLASH_CR2_OPT;    // lock back
         FLASH->NCR2 |= FLASH_NCR2_NOPT;
 
         WWDG->CR = WWDG_CR_WDGA; // Reset system
