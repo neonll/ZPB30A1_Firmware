@@ -77,11 +77,9 @@
 #define ADC_CAL_SENSE_T 1326
 #define ADC_CAL_SENSE_M 36546
 
-/* ADC value at which reverse voltage protection is triggered. Corresponds to
-~-0.5V
- */
-#define ADC_LOAD_MIN  450 // ADC counts
-#define ADC_SENSE_MIN 430 // ADC counts
+/* ADC value at which reverse voltage protection is triggered. */
+#define ADC_LOAD_MIN  100 // ADC counts
+#define ADC_SENSE_MIN 100 // ADC counts
 #define ADC_12V_MIN 10000 // mV
 #define ADC_INPUT_MAX 35000 // mV
 
