@@ -33,14 +33,14 @@ void gpio_init()
 
     GPIOC->DDR = PINC_I_SET | PINC_SCL | PINC_SDA1 | PINC_SDA2;
     GPIOC->CR1 = PINC_I_SET | PINC_SCL | // push pull
-    			 PINC_OL_DETECT | PINC_ENC_P | PINC_RUN_P; // pullup
+                 PINC_OL_DETECT | PINC_ENC_P | PINC_RUN_P; // pullup
     GPIOC->CR2 = PINC_OL_DETECT | PINC_ENC_P | PINC_RUN_P |  // irq
-    			 PINC_SCL | PINC_SDA1 | PINC_SDA2; // 10 MHz
+                 PINC_SCL | PINC_SDA1 | PINC_SDA2; // 10 MHz
 
 
     GPIOD->DDR = PIND_FAN | PIND_BUS_F | PIND_BEEPER | PIND_TX;
     GPIOD->CR1 = PIND_FAN | PIND_BUS_F | PIND_BEEPER | PIND_TX | // push pull
-    			 PIND_V_OK | PIND_TLI; // pullup
+                 PIND_V_OK | PIND_TLI; // pullup
     GPIOD->CR2 = PIND_V_OK | PIND_TLI; // irq
 
     GPIOE->ODR = PINE_ENABLE; // load off
@@ -77,19 +77,19 @@ void main(void) {
     
     systick_flag = 0; // Clear any overflows up to this point
     while (1) {
-    	if (systick_flag & SYSTICK_OVERFLOW)
-    	{
-    		error = ERROR_TIMER_OVERFLOW;
-    		systick_flag &= ~SYSTICK_OVERFLOW;
-    	}
-    	if (systick_flag & SYSTICK_COUNT) {
-    		adc_timer();
-    		fan_timer();
-    		ui_timer();
-    		load_timer();
-    		uart_timer();
-    		systick_flag &= ~SYSTICK_COUNT;
-    	}
+        if (systick_flag & SYSTICK_OVERFLOW)
+        {
+            error = ERROR_TIMER_OVERFLOW;
+            systick_flag &= ~SYSTICK_OVERFLOW;
+        }
+        if (systick_flag & SYSTICK_COUNT) {
+            adc_timer();
+            fan_timer();
+            ui_timer();
+            load_timer();
+            uart_timer();
+            systick_flag &= ~SYSTICK_COUNT;
+        }
     }
 }
 

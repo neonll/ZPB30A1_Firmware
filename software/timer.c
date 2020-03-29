@@ -20,7 +20,7 @@ void systick_init()
 void systick_irq() __interrupt(ITC_IRQ_TIM2_OVF)
 {
     if (systick_flag & SYSTICK_COUNT) {
-    	systick_flag |= SYSTICK_OVERFLOW;
+        systick_flag |= SYSTICK_OVERFLOW;
     }
     systick_flag |= SYSTICK_COUNT;
     systick++;

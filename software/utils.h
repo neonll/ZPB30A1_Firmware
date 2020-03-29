@@ -26,7 +26,7 @@ void delay10ms(uint32_t d);
 static inline void _delay_cycl( unsigned short __ticks )
 {
     __asm__("nop\n nop\n");
-    do { 		// ASM: ldw X, #tick; lab$: decw X; tnzw X; jrne lab$
+    do {         // ASM: ldw X, #tick; lab$: decw X; tnzw X; jrne lab$
                 __ticks--;//      2c;                 1c;     2c    ; 1/2c
         } while ( __ticks );
     __asm__("nop\n");

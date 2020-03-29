@@ -67,14 +67,14 @@ static void i2c_write(uint8_t data, uint8_t pin)
     uint8_t i;
     GPIO_DISPLAY->DDR |= pin;
     for (i = 7; i < 255; i--) {
-    	if (data & (1 << i)) {
-    		GPIO_DISPLAY->ODR |= pin;
-    	} else {
-    		GPIO_DISPLAY->ODR &= ~pin;
-    	}
-    	// Clock H/L
-    	GPIO_DISPLAY->ODR |= PIN_I2C_CLK;
-    	GPIO_DISPLAY->ODR &= ~PIN_I2C_CLK;
+        if (data & (1 << i)) {
+            GPIO_DISPLAY->ODR |= pin;
+        } else {
+            GPIO_DISPLAY->ODR &= ~pin;
+        }
+        // Clock H/L
+        GPIO_DISPLAY->ODR |= PIN_I2C_CLK;
+        GPIO_DISPLAY->ODR &= ~PIN_I2C_CLK;
     }
     // We don't need the ACK, so just do a single clock H/L without reading
     GPIO_DISPLAY->ODR |= PIN_I2C_CLK;
@@ -102,11 +102,11 @@ void disp_write(uint8_t addr, uint8_t data, uint8_t pin)
 void disp_char(uint8_t position, uint8_t c, uint8_t dot, uint8_t pin)
 {
     if (c == '.') {
-    	c = ' ';
-    	dot = 1;
+        c = ' ';
+        dot = 1;
     }
     if (c == ' ') {
-    	c = '@';
+        c = '@';
     }
     disp_write(DIGIT_REG + 2*position, chars[c - CHAR_OFFSET] | (dot?0x80:0), pin);
 }

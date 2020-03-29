@@ -10,7 +10,7 @@ struct _MenuItem {
     /* Label shown in menu. */
     const uint8_t               caption[5];
     /* Associated value Meaning depends on the handler (e.g. used in leaf items as the target variable's value when selecting this items) */
-    const uint8_t 				value;
+    const uint8_t                 value;
     /* Data pointer. Meaning depends on the handler (e.g. points to the target variable) */
     const void                 *data;
     /* Event handler. Show the UI. */

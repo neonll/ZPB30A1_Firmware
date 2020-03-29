@@ -62,9 +62,9 @@ static void ui_set_display_mode(display_mode_t mode, display_t disp)
 {
     display_mode[disp] = mode;
     if (mode & DISP_MODE_DIM) {
-    	disp_brightness(BRIGHTNESS_DIM, disp);
+        disp_brightness(BRIGHTNESS_DIM, disp);
     } else {
-    	disp_brightness(BRIGHTNESS_BRIGHT, disp);
+        disp_brightness(BRIGHTNESS_BRIGHT, disp);
     }
 }
 
@@ -84,9 +84,9 @@ static void ui_blink(uint8_t mode)
 {
     for (uint8_t i=0; i<2; i++)
     {
-    	if (display_mode[i] & mode) {
-    		ui_set_display_mode(display_mode[i] ^ DISP_MODE_DIM, i);
-    	}
+        if (display_mode[i] & mode) {
+            ui_set_display_mode(display_mode[i] ^ DISP_MODE_DIM, i);
+        }
     }
 }
 
@@ -96,14 +96,14 @@ static void ui_timer_blink()
     static uint16_t fast_timer = 0;
     slow_timer++;
     if (slow_timer == F_SYSTICK/F_DISPLAY_BLINK_SLOW) {
-    	slow_timer = 0;
-    	ui_blink(DISP_MODE_BLINK_SLOW);
+        slow_timer = 0;
+        ui_blink(DISP_MODE_BLINK_SLOW);
     }
 
     fast_timer++;
     if (fast_timer == F_SYSTICK/F_DISPLAY_BLINK_FAST) {
-    	fast_timer = 0;
-    	ui_blink(DISP_MODE_BLINK_FAST);
+        fast_timer = 0;
+        ui_blink(DISP_MODE_BLINK_FAST);
     }
 }
 
@@ -118,8 +118,8 @@ void ui_error_handler(uint8_t event, const MenuItem *item)
     ui_set_display_mode(DISP_MODE_DIM, DP_TOP);
     ui_set_display_mode(DISP_MODE_DIM, DP_BOT);
     if (event == EVENT_ENCODER_BUTTON) {
-    	ui_pop_item();
-    	error = ERROR_NONE;
+        ui_pop_item();
+        error = ERROR_NONE;
     }
 }
 
@@ -129,23 +129,23 @@ static void ui_timer_beeper()
     uint8_t timer_value = 0;
     static uint8_t timer = 0;
     if (load_disable_reason == DISABLE_CUTOFF) {
-    	timer_value = F_SYSTICK / F_BEEP_CUTOFF;
+        timer_value = F_SYSTICK / F_BEEP_CUTOFF;
     }
     if (error) {
-    	timer_value = F_SYSTICK / F_BEEP_ERROR;
+        timer_value = F_SYSTICK / F_BEEP_ERROR;
     }
     if (!timer_value) {
-    	if (encoder_val) {
-    		beeper_on();
-    		_delay_us(30);
-    	}
-    	beeper_off();
-    	timer = 0;
-    	return;
+        if (encoder_val) {
+            beeper_on();
+            _delay_us(30);
+        }
+        beeper_off();
+        timer = 0;
+        return;
     }
     if (++timer >= timer_value) {
-    	timer = 0;
-    	beeper_toggle();
+        timer = 0;
+        beeper_toggle();
     }
 }
 
@@ -154,19 +154,19 @@ void ui_timer()
     ui_timer_blink();
     ui_timer_beeper();
     if (error && current_item != &menu_error) {
-    	ui_push_item(&menu_error);
+        ui_push_item(&menu_error);
     }
     if (encoder_val > 0) {
-    	current_item->handler(EVENT_ENCODER_UP, current_item);
+        current_item->handler(EVENT_ENCODER_UP, current_item);
     }
     if (encoder_val < 0) {
-    	current_item->handler(EVENT_ENCODER_DOWN, current_item);
+        current_item->handler(EVENT_ENCODER_DOWN, current_item);
     }
     if (encoder_pressed) {
-    	current_item->handler(EVENT_ENCODER_BUTTON, current_item);
+        current_item->handler(EVENT_ENCODER_BUTTON, current_item);
     }
     if (run_pressed) {
-    	current_item->handler(EVENT_RUN_BUTTON, current_item);
+        current_item->handler(EVENT_RUN_BUTTON, current_item);
     }
     current_item->handler(EVENT_TIMER, current_item);
     encoder_val = 0;
@@ -177,7 +177,7 @@ void ui_timer()
 static void ui_text(const char *text, uint8_t display)
 {
     for (uint8_t i=0; i<4; i++) {
-    	if (display == DP_TOP || i != 3) disp_char(i, text[i], 0, display);
+        if (display == DP_TOP || i != 3) disp_char(i, text[i], 0, display);
     }
 }
 
@@ -186,13 +186,13 @@ static void ui_number(uint16_t num, uint8_t dot, uint8_t display)
     uint16_t maximum = (display == DP_TOP)?10000:1000;
     uint16_t digits = (display == DP_TOP)?4:3;
     while (num >= maximum) {
-    	num /= 10;
-    	dot--;
+        num /= 10;
+        dot--;
     }
     for (int8_t i=digits-1; i>=0; i--)
     {
-    	disp_char(i, num % 10 + '0', dot==(digits-1-i), display);
-    	num /= 10;
+        disp_char(i, num % 10 + '0', dot==(digits-1-i), display);
+        num /= 10;
     }
 }
 
@@ -214,7 +214,7 @@ static uint8_t ui_num_subitem(const MenuItem *item)
 static void ui_push_item(const MenuItem *item)
 {
     if (menu_stack_head != 0 || menu_stack[0] != 0) {
-    	menu_stack_head++; //First push is for the main menu
+        menu_stack_head++; //First push is for the main menu
     }
     current_item = item;
     current_subitem_index = 0;
@@ -224,7 +224,7 @@ static void ui_push_item(const MenuItem *item)
 static void ui_pop_item()
 {
     if (menu_stack_head != 0) {
-    	menu_stack_head--;
+        menu_stack_head--;
     }
     ui_leds(0);
     settings_update(); //Store change value to eeprom
@@ -237,28 +237,28 @@ static void ui_select(uint8_t event, const MenuItem *item, uint8_t display)
     uint8_t display2 = display==DP_TOP?DP_BOT:DP_TOP;
     bool output = event & (EVENT_BITMASK_MENU | EVENT_BITMASK_ENCODER);
     if (event & EVENT_BITMASK_MENU) {
-    	ui_set_display_mode(DISP_MODE_BLINK_FAST, display);
-    	ui_set_display_mode(DISP_MODE_DIM, display2);
+        ui_set_display_mode(DISP_MODE_BLINK_FAST, display);
+        ui_set_display_mode(DISP_MODE_DIM, display2);
     }
     if (event == EVENT_ENCODER_UP) {
-    	if (current_subitem_index < ui_num_subitem(item) - 1) {
-    		current_subitem_index++;
-    	} else {
-    		current_subitem_index = 0;
-    	}
+        if (current_subitem_index < ui_num_subitem(item) - 1) {
+            current_subitem_index++;
+        } else {
+            current_subitem_index = 0;
+        }
     }
     if (event == EVENT_ENCODER_DOWN) {
-    	if (current_subitem_index > 0) {
-    		current_subitem_index--;
-    	} else {
-    		current_subitem_index = ui_num_subitem(item) - 1;
-    	}
+        if (current_subitem_index > 0) {
+            current_subitem_index--;
+        } else {
+            current_subitem_index = ui_num_subitem(item) - 1;
+        }
     }
     if (output) {
-    	ui_text(current_subitem->caption, display);
+        ui_text(current_subitem->caption, display);
     }
     if (event == EVENT_RUN_BUTTON) {
-    	ui_pop_item();
+        ui_pop_item();
     }
 }
 
@@ -268,24 +268,24 @@ static void ui_select(uint8_t event, const MenuItem *item, uint8_t display)
 void ui_submenu(uint8_t event, const MenuItem *item)
 {
     if (event & EVENT_PREVIEW) {
-    	// Show nothing in bottom display as preview
-    	ui_text("   ", DP_BOT);
-    	return;
+        // Show nothing in bottom display as preview
+        ui_text("   ", DP_BOT);
+        return;
     }
     if (event == EVENT_RUN_BUTTON && menu_stack_head == 0)
     {
-    	//Main menu + Run button => turn on load
-    	ui_push_item(&menu_active);
-    	return;
+        //Main menu + Run button => turn on load
+        ui_push_item(&menu_active);
+        return;
     }
     ui_select(event, item, DP_TOP);
     if (current_subitem->handler) {
-    	current_subitem->handler(event | EVENT_PREVIEW, current_subitem);
+        current_subitem->handler(event | EVENT_PREVIEW, current_subitem);
     } else {
-    	ui_text("===", DP_BOT); //Show warning that no handler is defined (makes no sense for ui_submenu!)
+        ui_text("===", DP_BOT); //Show warning that no handler is defined (makes no sense for ui_submenu!)
     }
     if (event == EVENT_ENCODER_BUTTON) {
-    	ui_push_item(current_subitem);
+        ui_push_item(current_subitem);
     }
 
 }
@@ -295,9 +295,9 @@ static uint8_t ui_find_active_subitem(const MenuItem *item)
     uint8_t n = ui_num_subitem(item);
     uint8_t value = *((uint8_t*)item->data);
     for (uint8_t i=0; i<n; i++) {
-    	if (item->subitems[i]->value == value) {
-    		return i;
-    	}
+        if (item->subitems[i]->value == value) {
+            return i;
+        }
     }
     // Item not found => use first subitem as default value!
     return 0;
@@ -310,25 +310,25 @@ static uint8_t ui_find_active_subitem(const MenuItem *item)
 void ui_select_item(uint8_t event, const MenuItem *item)
 {
     if (event & EVENT_PREVIEW) {
-    	// Show selected value in bottom display as preview
-    	ui_text(item->subitems[ui_find_active_subitem(item)]->caption, DP_BOT);
-    	return;
+        // Show selected value in bottom display as preview
+        ui_text(item->subitems[ui_find_active_subitem(item)]->caption, DP_BOT);
+        return;
     }
     if (event == EVENT_ENTER) {
-    	current_subitem_index = ui_find_active_subitem(item);
+        current_subitem_index = ui_find_active_subitem(item);
     }
     ui_select(event, item, DP_BOT);
 
     if (event == EVENT_ENCODER_BUTTON) {
-    	/* If a handler is available use it to set the value. */
-    	if (current_subitem->handler) {
-    		current_subitem->handler(EVENT_ENTER, current_subitem);
-    	} else {
-    		/* No handler => just set the value ourselves. */
-    		uint8_t *p = (uint8_t*)item->data;
-    		*p = current_subitem->value;
-    		ui_pop_item();
-    	}
+        /* If a handler is available use it to set the value. */
+        if (current_subitem->handler) {
+            current_subitem->handler(EVENT_ENTER, current_subitem);
+        } else {
+            /* No handler => just set the value ourselves. */
+            uint8_t *p = (uint8_t*)item->data;
+            *p = current_subitem->value;
+            ui_pop_item();
+        }
     }
 }
 
@@ -340,66 +340,66 @@ void ui_edit_value_internal(uint8_t event, const NumericEdit *edit, uint8_t leds
     static uint16_t value;
     uint8_t display = DP_BOT, display2 = DP_TOP;
     if (event & EVENT_PREVIEW) {
-    	ui_number(*edit->var, edit->dot_offset, display);
-    	return;
+        ui_number(*edit->var, edit->dot_offset, display);
+        return;
     }
 
     uint16_t inc;
     if (value >= 10000) {
-    	inc = 100;
+        inc = 100;
     } else if (value >= 1000) {
-    	inc = 10;
+        inc = 10;
     } else {
-    	inc = 1;
+        inc = 1;
     }
     if (current_subitem_index == 0) {
-    	inc *= 10;
+        inc *= 10;
     }
 
     bool pop = false;
 
     switch (event) {
     case EVENT_ENTER:
-    	ui_set_display_mode(DISP_MODE_BRIGHT, display);
-    	ui_set_display_mode(DISP_MODE_DIM, display2);
-    	ui_leds(leds | LED_DIGIT1);
-    	value = *edit->var;
-    	current_subitem_index = 0;
-    	break;
+        ui_set_display_mode(DISP_MODE_BRIGHT, display);
+        ui_set_display_mode(DISP_MODE_DIM, display2);
+        ui_leds(leds | LED_DIGIT1);
+        value = *edit->var;
+        current_subitem_index = 0;
+        break;
     case EVENT_RUN_BUTTON:
-    	pop = true;
-    	break;
+        pop = true;
+        break;
     case EVENT_ENCODER_BUTTON:
-    	if (current_subitem_index == 0) {
-    		current_subitem_index = 1;
-    		ui_leds(leds | LED_DIGIT2);
-    	} else {
-    		*edit->var = value;
-    		pop = true;
-    	}
-    	break;
+        if (current_subitem_index == 0) {
+            current_subitem_index = 1;
+            ui_leds(leds | LED_DIGIT2);
+        } else {
+            *edit->var = value;
+            pop = true;
+        }
+        break;
     case EVENT_ENCODER_UP:
-    	if (value < edit->max - inc) {
-    		 value += inc;
-    	 } else {
-    		 value = edit->max;
-    	 }
-    	break;
+        if (value < edit->max - inc) {
+             value += inc;
+         } else {
+             value = edit->max;
+         }
+        break;
     case EVENT_ENCODER_DOWN:
-    	if (value > edit->min + inc) {
-    		value -= inc;
-    	} else {
-    		value = edit->min;
-    	}
-    	break;
+        if (value > edit->min + inc) {
+            value -= inc;
+        } else {
+            value = edit->min;
+        }
+        break;
     }
     bool output = !pop && event & (EVENT_BITMASK_MENU | EVENT_BITMASK_ENCODER);
     if (output) {
-    	ui_number(value, edit->dot_offset, display);
+        ui_number(value, edit->dot_offset, display);
     }
     if (pop) {
-    	// Pop must be the last action to avoid overwriting the display
-    	ui_pop_item();
+        // Pop must be the last action to avoid overwriting the display
+        ui_pop_item();
     }
 }
 
@@ -416,28 +416,28 @@ void ui_edit_setpoint(uint8_t event, const MenuItem *item)
     const char *label = 0;
     uint8_t leds = 0;
     switch (settings.mode) {
-    	case MODE_CC:
-    		edit = &menu_value_edit_CC;
-    		label = "AMP ";
-    		leds = LED_A;
-    		break;
-    	case MODE_CV:
-    		edit = &menu_value_edit_CV;
-    		label = "VOLT";
-    		leds = LED_V;
-    		break;
-    	case MODE_CR:
-    		edit = &menu_value_edit_CR;
-    		label = "OHM ";
-    		break;
-    	case MODE_CW:
-    		edit = &menu_value_edit_CW;
-    		label = "WATT";
-    		break;
-    	default:
-    		edit = 0;
-    		label = "===";
-    		break;
+        case MODE_CC:
+            edit = &menu_value_edit_CC;
+            label = "AMP ";
+            leds = LED_A;
+            break;
+        case MODE_CV:
+            edit = &menu_value_edit_CV;
+            label = "VOLT";
+            leds = LED_V;
+            break;
+        case MODE_CR:
+            edit = &menu_value_edit_CR;
+            label = "OHM ";
+            break;
+        case MODE_CW:
+            edit = &menu_value_edit_CW;
+            label = "WATT";
+            break;
+        default:
+            edit = 0;
+            label = "===";
+            break;
     }
     if (!(event & EVENT_PREVIEW)) ui_text(label, DP_TOP);
     if (edit) ui_edit_value_internal(event, edit, leds);
@@ -449,54 +449,54 @@ void ui_show_values(uint8_t event)
     static uint8_t update_timer = 0;
     static bool manual_mode = false;
     enum {
-    	STATE_V,
-    	STATE_AH,
-    	STATE_WH,
-    	STATE_MAX,
+        STATE_V,
+        STATE_AH,
+        STATE_WH,
+        STATE_MAX,
     };
     static uint8_t state = STATE_V;
     bool update = false;
 
     if (event == EVENT_ENTER || event == EVENT_RETURN)
     {
-    	switch_timer = 0;
-    	update_timer = F_SYSTICK/F_UI_UPDATE_DISPLAY - 1;
-    	manual_mode = 0;
+        switch_timer = 0;
+        update_timer = F_SYSTICK/F_UI_UPDATE_DISPLAY - 1;
+        manual_mode = 0;
     }
 
     if (event == EVENT_ENCODER_UP) {
-    	manual_mode = true;
-    	update = true;
-    	if (++state == STATE_MAX) state = STATE_V;
+        manual_mode = true;
+        update = true;
+        if (++state == STATE_MAX) state = STATE_V;
     }
     if (event == EVENT_ENCODER_DOWN) {
-    	manual_mode = true;
-    	update = true;
-    	if (state-- == STATE_V) state = STATE_MAX - 1;
+        manual_mode = true;
+        update = true;
+        if (state-- == STATE_V) state = STATE_MAX - 1;
     }
 
     if (!manual_mode && (++switch_timer == F_SYSTICK/F_UI_SWITCH_DISPLAY)) {
         switch_timer = 0;
-    	if (++state == STATE_MAX) state = STATE_V;
+        if (++state == STATE_MAX) state = STATE_V;
     }
     if (((event == EVENT_TIMER) && (++update_timer == F_SYSTICK/F_UI_UPDATE_DISPLAY)) ||
-    	 update) {
-    	update_timer = 0;
-    	switch (state) {
-    		case STATE_V:
-    			ui_leds(LED_A|LED_V); //Update run led
-    			ui_number(adc_get_voltage(), VOLT_DOT_OFFSET, DP_TOP);
-    			break;
-    		case STATE_AH:
-    			ui_leds(LED_A|LED_AH);
-    			ui_number(mAmpere_seconds/3600, AS_DOT_OFFSET, DP_TOP);
-    			break;
-    		case STATE_WH:
-    			ui_leds(LED_A|LED_WH);
-    			ui_number(mWatt_seconds/3600, WS_DOT_OFFSET, DP_TOP);
-    			break;
-    	}
-    	ui_number(actual_current_setpoint, CUR_DOT_OFFSET, DP_BOT);
+         update) {
+        update_timer = 0;
+        switch (state) {
+            case STATE_V:
+                ui_leds(LED_A|LED_V); //Update run led
+                ui_number(adc_get_voltage(), VOLT_DOT_OFFSET, DP_TOP);
+                break;
+            case STATE_AH:
+                ui_leds(LED_A|LED_AH);
+                ui_number(mAmpere_seconds/3600, AS_DOT_OFFSET, DP_TOP);
+                break;
+            case STATE_WH:
+                ui_leds(LED_A|LED_WH);
+                ui_number(mWatt_seconds/3600, WS_DOT_OFFSET, DP_TOP);
+                break;
+        }
+        ui_number(actual_current_setpoint, CUR_DOT_OFFSET, DP_BOT);
     }
 }
 
@@ -506,19 +506,19 @@ void ui_active(uint8_t event, const MenuItem *item)
     if (event & EVENT_PREVIEW) return; //Unsupported
     ui_show_values(event);
     if (event == EVENT_RUN_BUTTON ||
-    	(event == EVENT_RETURN && error != ERROR_NONE)) {
-    	load_disable(DISABLE_USER);
-    	ui_pop_item();
-    	return;
+        (event == EVENT_RETURN && error != ERROR_NONE)) {
+        load_disable(DISABLE_USER);
+        ui_pop_item();
+        return;
     }
     if (event == EVENT_ENTER || event == EVENT_RETURN) {
-    	load_enable();
-    	ui_set_display_mode(DISP_MODE_DIM, DP_TOP);
-    	ui_set_display_mode(DISP_MODE_DIM, DP_BOT);
+        load_enable();
+        ui_set_display_mode(DISP_MODE_DIM, DP_TOP);
+        ui_set_display_mode(DISP_MODE_DIM, DP_BOT);
     }
 
     if (event == EVENT_ENCODER_BUTTON) {
-    	ui_push_item(&menu_value);
+        ui_push_item(&menu_value);
     }
 
 }
@@ -529,11 +529,11 @@ void ui_encoder_irq() __interrupt(ITC_IRQ_PORTB)
     static uint8_t _encoder_dir = 0xFF;
     uint8_t cur = (GPIOB->IDR >> 4) & 3;
     if (cur == 0) {
-    	if (_encoder_dir == 2) {
-    		encoder_val++;
-    	} else if (_encoder_dir == 1) {
-    		encoder_val--;
-    	}
+        if (_encoder_dir == 2) {
+            encoder_val++;
+        } else if (_encoder_dir == 1) {
+            encoder_val--;
+        }
     }
     _encoder_dir = cur;
 }

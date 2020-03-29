@@ -28,32 +28,32 @@ void uart_timer()
     timer++;
     //Output one item each systick, but only start output with F_LOG
     if (cnt || (timer == F_SYSTICK/F_LOG)) {
-    	timer = 0;
-    	cnt++;
-    	if (cnt == 1) {
-    		char status = ' ';
-    		if (load_active) {
-    			status = load_regulated?'A':'U';
-    		}
-    		printf("%c %d ", status, error);
-    	} else if (cnt == 2) {
-    		printf("T %3u ", temperature);
-    	} else if (cnt == 3) {
-    		printf("Vi %5u ", v_12V);
-    	} else if (cnt == 4) {
-    		printf("Vl %5u ", v_load);
-    	} else if (cnt == 5) {
-    		printf("Vs %5u ", v_sense);
-    	} else if (cnt == 6) {
-    		printf("I %5u ", actual_current_setpoint);
-    	} else if (cnt == 7) {
-    		printf("mWs %10lu ", mWatt_seconds);
-    	} else if (cnt == 8) {
-    		printf("mAs %10lu ", mAmpere_seconds);
-    	} else {
-    		printf("\r\n");
-    		cnt = 0;
-    	}
+        timer = 0;
+        cnt++;
+        if (cnt == 1) {
+            char status = ' ';
+            if (load_active) {
+                status = load_regulated?'A':'U';
+            }
+            printf("%c %d ", status, error);
+        } else if (cnt == 2) {
+            printf("T %3u ", temperature);
+        } else if (cnt == 3) {
+            printf("Vi %5u ", v_12V);
+        } else if (cnt == 4) {
+            printf("Vl %5u ", v_load);
+        } else if (cnt == 5) {
+            printf("Vs %5u ", v_sense);
+        } else if (cnt == 6) {
+            printf("I %5u ", actual_current_setpoint);
+        } else if (cnt == 7) {
+            printf("mWs %10lu ", mWatt_seconds);
+        } else if (cnt == 8) {
+            printf("mAs %10lu ", mAmpere_seconds);
+        } else {
+            printf("\r\n");
+            cnt = 0;
+        }
     }
 }
 
