@@ -12,6 +12,9 @@
 #define F_UI_SWITCH_DISPLAY 0.2
 #define F_UI_UPDATE_DISPLAY 2
 
+#define BRIGHTNESS_BRIGHT 4
+#define BRIGHTNESS_DIM 2
+
 /* F_POWER_CALC must be an integer 1 <= f <= F_SYSTICK and an
    integer divider of F_SYSTICK */
 #define F_POWER_CALC 100

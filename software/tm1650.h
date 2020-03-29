@@ -2,12 +2,6 @@
 #define _TM1650_H_
 #include <stdint.h>
 
-
-typedef enum {
-    BRIGHTNESS_BRIGHT = 5,
-    BRIGHTNESS_DIM = 3
-} brightness_t;
-
 typedef enum {
     DP_TOP,
     DP_BOT
