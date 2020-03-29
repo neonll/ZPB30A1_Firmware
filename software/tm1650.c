@@ -113,7 +113,7 @@ void disp_char(uint8_t position, uint8_t c, uint8_t dot, uint8_t pin)
 
 void disp_brightness(uint8_t brightness, uint8_t pin)
 {
-    if (!brightness) disp_write(0x48, 0x00, pin); // OFF
+    if (!brightness) disp_write(BRIGHTNESS_REG, 0x00, pin); // OFF
     else disp_write(BRIGHTNESS_REG, ((brightness & 7) << 4) | 0x01, pin); // 8 brightness levels
 }
 

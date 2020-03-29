@@ -29,7 +29,7 @@
 #define CUR_MAX 10000 //mA
 #define CUR_DOT_OFFSET 3
 
-#define POW_MIN 0 //mW
+#define POW_MIN 1 //mW
 #define POW_MAX 60000 //mW: maximum settable power
 #define POW_DOT_OFFSET 3
 #define POW_ABS_MAX 65000 //mW: Current at which the load current is reduced

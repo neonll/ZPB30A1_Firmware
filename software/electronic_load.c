@@ -40,7 +40,7 @@ void gpio_init()
 
     GPIOD->DDR = PIND_FAN | PIND_BUS_F | PIND_BEEPER | PIND_TX;
     GPIOD->CR1 = PIND_FAN | PIND_BUS_F | PIND_BEEPER | PIND_TX | // push pull
-                 PIND_V_OK | PIND_TLI; // pullup
+                 PIND_V_OK | PIND_TLI | PIND_RX; // pullup
     GPIOD->CR2 = PIND_V_OK | PIND_TLI; // irq
 
     GPIOE->ODR = PINE_ENABLE; // load off
@@ -90,6 +90,7 @@ void main(void) {
             uart_timer();
             systick_flag &= ~SYSTICK_COUNT;
         }
+        uart_handler();
     }
 }
 

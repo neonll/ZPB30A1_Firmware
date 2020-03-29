@@ -14,7 +14,7 @@ void delay10ms(uint32_t d);
  */
 
 #ifndef F_CPU
-#warning F_CPU is not defined!
+#error F_CPU is not defined!
 #endif
 
 /*

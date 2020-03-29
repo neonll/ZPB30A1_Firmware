@@ -110,8 +110,12 @@ static void ui_timer_blink()
 void ui_error_handler(uint8_t event, const MenuItem *item)
 {
     (void) item; //Unused
+    if (error == 0) {
+        // Error has been resolved
+        ui_pop_item();
+    }
     if (event == EVENT_PREVIEW || event == EVENT_TIMER) return;
-    const char msgs[][5] = {"", "POL ", "OVP ", "OVLD", "PWR", "TEMP", "SUP ", "TIME", "INT "};
+    const char msgs[][5] = {"", "POL ", "OVP ", "OVLD", "PWR", "TEMP", "SUP ", "TIME", "INT ", "CMD "};
     load_disable(DISABLE_ERROR);
     ui_text("ERR", DP_BOT);
     ui_text(msgs[error], DP_TOP);
@@ -198,6 +202,7 @@ static void ui_number(uint16_t num, uint8_t dot, uint8_t display)
 
 static void ui_leds(uint8_t leds)
 {
+    /* TODO: Blink run LED when load is out of regulation. */
     uint8_t run_led = load_active ? LED_RUN : 0;
     disp_leds(leds | run_led);
 }
@@ -227,7 +232,7 @@ static void ui_pop_item()
         menu_stack_head--;
     }
     ui_leds(0);
-    settings_update(); //Store change value to eeprom
+    settings_update(); //Store changed value to eeprom
     current_item->handler(EVENT_RETURN, current_item);
 }
 
@@ -275,7 +280,7 @@ void ui_submenu(uint8_t event, const MenuItem *item)
     if (event == EVENT_RUN_BUTTON && menu_stack_head == 0)
     {
         //Main menu + Run button => turn on load
-        ui_push_item(&menu_active);
+        ui_activate_load();
         return;
     }
     ui_select(event, item, DP_TOP);
@@ -507,12 +512,11 @@ void ui_active(uint8_t event, const MenuItem *item)
     ui_show_values(event);
     if (event == EVENT_RUN_BUTTON ||
         (event == EVENT_RETURN && error != ERROR_NONE)) {
-        load_disable(DISABLE_USER);
-        ui_pop_item();
+        ui_disable_load();
         return;
     }
     if (event == EVENT_ENTER || event == EVENT_RETURN) {
-        load_enable();
+
         ui_set_display_mode(DISP_MODE_DIM, DP_TOP);
         ui_set_display_mode(DISP_MODE_DIM, DP_BOT);
     }
@@ -520,7 +524,29 @@ void ui_active(uint8_t event, const MenuItem *item)
     if (event == EVENT_ENCODER_BUTTON) {
         ui_push_item(&menu_value);
     }
+}
 
+void ui_activate_load()
+{
+    if (!load_active) {
+        load_enable();
+        //First return to main menu and then push the special "active" menu item.
+        while (menu_stack_head) {
+            ui_pop_item();
+        }
+        ui_push_item(&menu_active);
+    }
+}
+
+void ui_disable_load()
+{
+    if (load_active) {
+        load_disable(DISABLE_USER);
+        //Return to main menu, removing the "active" menu item and any subitems from stack
+        while (menu_stack_head) {
+            ui_pop_item();
+        }
+    }
 }
 
 //TODO: Correctly handle bouncing encoder

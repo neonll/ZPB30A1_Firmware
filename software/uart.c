@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "adc.h"
 #include "load.h"
+#include "ui.h"
 
 void uart_init()
 {
@@ -57,10 +58,139 @@ void uart_timer()
     }
 }
 
+typedef enum {
+    STATE_IDLE,
+    STATE_COMMAND,
+    STATE_DIGITS,
+    STATE_WAITING_FOR_EXECUTION,
+    STATE_UNINITIALIZED,
+} uart_state_t;
+#define CMD_RESET '!'
+
+typedef enum {
+    ERR_NONE,
+    ERR_MODE_INVALID,
+    ERR_OUT_OF_RANGE,
+    ERR_NOT_A_DIGIT,
+    ERR_SHOULD_NOT_HAPPEN, // = Internal logic error
+    ERR_INVALID_COMMAND,
+} error_codes_t;
+
+static uart_state_t state = STATE_UNINITIALIZED;
+static uint8_t cmd;
+static uint16_t param;
+static uint8_t error_code = 0;
+
+static inline void set_error(uint8_t code)
+{
+    error_code = code;
+    error = ERROR_COMMAND;
+}
+
+void uart_handler()
+{
+    if (error == ERROR_COMMAND) {
+        if (error_code) {
+            printf("CMD: ERR %d %d %d\r\n", cmd, param, error_code);
+            error_code = 0;
+        }
+    }
+    if (state == STATE_WAITING_FOR_EXECUTION) {
+        printf("CMD: %c, PARAM: %d\r\n", cmd, param);
+
+        switch (cmd) {
+            case 'R': // Run
+                if (!load_active) {
+                    ui_activate_load(); //This is handled in the UI code because we want to show the run mode on the display as well.
+                }
+                break;
+            case 'S': // Stop
+                if (load_active) {
+                    ui_disable_load();
+                }
+                break;
+            case 'M': // Mode
+                if (param < NUM_MODES) {
+                    settings.mode = param;
+                } else {
+                    set_error(ERR_MODE_INVALID);
+                }
+                break;
+            case 'c': // Setpoint CC
+                if (param >= CUR_MIN && param <= CUR_MAX) {
+                    settings.setpoints[MODE_CC] = param;
+                } else {
+                    set_error(ERR_OUT_OF_RANGE);
+                }
+                break;
+            case 'w': // Setpoint CW
+                if (param >= POW_MIN && param <= POW_MAX) {
+                    settings.setpoints[MODE_CW] = param;
+                } else {
+                    set_error(ERR_OUT_OF_RANGE);
+                }
+                break;
+            case 'r': // Setpoint CR
+                if (param >= R_MIN && param <= R_MAX) {
+                    settings.setpoints[MODE_CR] = param;
+                } else {
+                    set_error(ERR_OUT_OF_RANGE);
+                }
+                break;
+            case 'v': // Setpoint CV
+                if (param >= VOLT_MIN && param <= VOLT_MAX) {
+                    settings.setpoints[MODE_CV] = param;
+                } else {
+                    set_error(ERR_OUT_OF_RANGE);
+                }
+                break;
+            case 'E': // Store settings
+                settings_update();
+                break;
+            case 'e': // Load settings
+                settings_init();
+                break;
+            default:
+                set_error(ERR_INVALID_COMMAND);
+        }
+        cmd = 0;
+        param = 0;
+        state = STATE_IDLE;
+    }
+}
 
 void uart_rx_irq() __interrupt(ITC_IRQ_UART2_RX)
 {
-    char tmp = UART2->DR;
+    char c = UART2->DR;
+    if (c == CMD_RESET) {
+        state = STATE_IDLE;
+        cmd = 0;
+        param = 0;
+        if (error == ERROR_COMMAND) {
+            error = 0;
+            error_code = ERR_NONE;
+        }
+    } else if (state == STATE_UNINITIALIZED) {
+        // Ignore everything till the interface is initialized
+    } else if (c == '\n' || c == '\r') {
+        if (state != STATE_IDLE) {
+            state = STATE_WAITING_FOR_EXECUTION;
+        }
+    } else if (state == STATE_IDLE) {
+        cmd = c;
+        param = 0;
+        state = STATE_DIGITS;
+    } else if (state == STATE_DIGITS) {
+        if (c >= '0' && c <= '9') {
+            param *= 10;
+            param += c - '0';
+        } else {
+            set_error(ERR_NOT_A_DIGIT);
+            error = ERROR_COMMAND;
+            error_code = 1;
+        }
+    } else {
+        set_error(ERR_SHOULD_NOT_HAPPEN);
+    }
     //TODO: Calibration mode
-    //TODO: Remote control
 }

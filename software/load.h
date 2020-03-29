@@ -15,6 +15,7 @@ typedef enum {
     ERROR_POWER_SUPPLY, // supply voltage to low
     ERROR_TIMER_OVERFLOW, // timer tick lost
     ERROR_INTERNAL, // other internal error
+    ERROR_COMMAND, // invalid command received
 } error_t;
 extern error_t error;
 

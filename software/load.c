@@ -71,7 +71,7 @@ static inline void load_update()
             }
 
             if (voltage < setpoint) {
-                //Current to high
+                //Current too high
                 if (last_step_size < 0) {
                     if (last_step_size > STEP_SIZE_MIN) {
                         last_step_size--;
@@ -89,7 +89,7 @@ static inline void load_update()
                     last_current = CUR_MIN;
                 }
             } else {
-                //Current to low
+                //Current too low
                 if (last_step_size > 0) {
                     if (last_step_size < STEP_SIZE_MAX) {
                         last_step_size++;
@@ -123,7 +123,7 @@ static inline void load_update()
             break;
     }
     /* NOTE: Here v_load is used directly instead of adc_get_voltage, because
-       for the power dissipation only the voltage that reaches the load's
+       for the MOSFET's power dissipation only the voltage that reaches the load's
        terminals is relevant. */
     uint16_t current_power_limited = (uint32_t)(POW_ABS_MAX) * 1000 / v_load;
     if (current < CUR_MIN) current = CUR_MIN;
