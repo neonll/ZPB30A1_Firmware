@@ -32,11 +32,11 @@ void uart_timer()
         timer = 0;
         cnt++;
         if (cnt == 1) {
-            char status = ' ';
+            char status = 'D';
             if (load_active) {
                 status = load_regulated?'A':'U';
             }
-            printf("%c %d ", status, error);
+            printf("VAL:%c %d ", status, error);
         } else if (cnt == 2) {
             printf("T %3u ", temperature);
         } else if (cnt == 3) {
@@ -65,16 +65,6 @@ typedef enum {
     STATE_WAITING_FOR_EXECUTION,
     STATE_UNINITIALIZED,
 } uart_state_t;
-#define CMD_RESET '!'
-
-typedef enum {
-    ERR_NONE,
-    ERR_MODE_INVALID,
-    ERR_OUT_OF_RANGE,
-    ERR_NOT_A_DIGIT,
-    ERR_SHOULD_NOT_HAPPEN, // = Internal logic error
-    ERR_INVALID_COMMAND,
-} error_codes_t;
 
 static uart_state_t state = STATE_UNINITIALIZED;
 static uint8_t cmd;
@@ -91,12 +81,12 @@ void uart_handler()
 {
     if (error == ERROR_COMMAND) {
         if (error_code) {
-            printf("CMD: ERR %d %d %d\r\n", cmd, param, error_code);
+            printf("ERR:%d %d %d\r\n", cmd, param, error_code);
             error_code = 0;
         }
     }
     if (state == STATE_WAITING_FOR_EXECUTION) {
-        printf("CMD: %c, PARAM: %d\r\n", cmd, param);
+        printf("CMD:%c%d\r\n", cmd, param);
 
         switch (cmd) {
             case 'R': // Run
