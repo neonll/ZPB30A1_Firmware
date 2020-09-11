@@ -11,6 +11,7 @@
 #include "fan.h"
 #include "adc.h"
 #include "beeper.h"
+#include "remote.h"
 #include "inc/stm8s_clk.h"
 #include "inc/stm8s_exti.h"
 #include "inc/stm8s_itc.h"
@@ -59,6 +60,7 @@ void main(void) {
 	gpio_init();
 	adc_init();
 	uart_init();
+	remote_init();
 	systick_init();
 	load_init();
 	beeper_init();
@@ -84,6 +86,7 @@ void main(void) {
 			ui_timer();
 			load_timer();
 			uart_timer();
+			remote_timer();
 			systick_flag &= ~SYSTICK_COUNT;
 		}
 	}

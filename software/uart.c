@@ -6,6 +6,8 @@
 #include "adc.h"
 #include "load.h"
 
+uart_buffer_t guart_buffer;
+
 void uart_init()
 {
 	uint16_t uart_div =  (F_CPU + BAUDR/2) / BAUDR;
@@ -57,10 +59,14 @@ void uart_timer()
 	}
 }
 
-
 void uart_rx_irq() __interrupt(ITC_IRQ_UART2_RX)
 {
-	char tmp = UART2->DR;
+	//uint8_t tmp = UART2->DR;
+	while (UART2->SR & (uint8_t)UART2_FLAG_RXNE) {
+		UART_BUFFER_WR(guart_buffer, UART2->DR);
+	}
+
 	//TODO: Calibration mode
 	//TODO: Remote control
+
 }
