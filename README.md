@@ -104,54 +104,54 @@ run mode.
 * INT: Internal error. Should not happen. Check the source code where this error is set and try to fix it.
 
 ### Serial Remote Control
-Command can be sent to the device over the serial port. All settings are can be modified and the load can be enabled and disabled. A help system is included. The code is designed to be easily expandable if you need to add more commands.
+Command can be sent to the device over the serial port. All settings can be modified and the load can be enabled and disabled. A help system is included. Send `HELP` or `command HELP` for details. The code is designed to be easily expandable if you need to add more commands.
 
-* SETMODE [CC|CV|CR|CP]
+#### SETMODE [CC|CV|CR|CP]
 Set the operating Mode of the electronic load.
-  CC = Constant Current
-  CV = Constant Voltage
-  CR = Constant Resistance
-  CP = Constant Power
+  * CC = Constant Current
+  * CV = Constant Voltage
+  * CR = Constant Resistance
+  * CP = Constant Power
 
-* SETI [mA]
+#### SETI [mA]
 Set the target amperage for constant current mode.
-  mA = Target amperage in milliamps between 200 (0.2A) and 10000 (10A)
+  * mA = Target amperage in milliamps between 200 (0.2A) and 10000 (10A)
 
-* SETV [mV]
+#### SETV [mV]
 Set the target voltage for constant voltage mode.
-  mV = Target voltage in millivolts between 500 (0.5V) and 30000 (30V).
+  * mV = Target voltage in millivolts between 500 (0.5V) and 30000 (30V).
 
-* SETR [mR]
+#### SETR [mR]
 Set the target resistance for constant resistance mode.
-  mR = Target resistance in milliohms between 10 (0.01 ohms) and 15000 (15 ohms)\n"
+  * mR = Target resistance in milliohms between 10 (0.01 ohms) and 15000 (15 ohms)\n"
 
-* SETP [mW]
+#### SETP [mW]
 Set the target power for constant power mode.
-  mW = Target power in milliwatts between 0 and 60000 (60W)
+  * mW = Target power in milliwatts between 0 and 60000 (60W)
 
-* SETBEEP [OFF|ON]
+#### SETBEEP [OFF|ON]
 Enable or disable alarm and notification sounds.
-  OFF = Turn off alarms and notifications
-  ON = Turn on alarms and notifications
+  * OFF = Turn off alarms and notifications
+  * ON = Turn on alarms and notifications
 
-* SETCUTOFF [mV|OFF]
+#### SETCUTOFF [mV|OFF]
 Target cutoff voltage. If the voltage falls below target, the load will be disabled.
-  mV = Cutoff voltage in millivolts between 500 (0.5V) and 30000 (30V)
-  OFF = No action will be taken if voltage falls too low
+  * mV = Cutoff voltage in millivolts between 500 (0.5V) and 30000 (30V)
+  * OFF = No action will be taken if voltage falls too low
 
-* SETILIMIT [mA]
+#### SETILIMIT [mA]
 Set current limit. If this current is exceeded, the load will be disabled.
-   mA = Amperage limit in milliamps between 200 (0.2A) and 10000 (10A)
+   * mA = Amperage limit in milliamps between 200 (0.2A) and 10000 (10A)
 
-* SETPLIMIT [NOLIMIT|LIMIT]
+#### SETPLIMIT [NOLIMIT|LIMIT]
 Set action to take if maximum power limit is exceeded.
-  NOLIMIT = No action is taken
-  LIMIT = Load will be disabled if power limit is exceeded
+  * NOLIMIT = No action is taken
+  * LIMIT = Load will be disabled if power limit is exceeded
 
-* LOAD [ON|OFF]
+#### LOAD [ON|OFF]
 Requests the load to activate or deactivate.
-  ON = Activates the load
-  OFF = Deactivates the load
+  * ON = Activates the load
+  * OFF = Deactivates the load
 NOTE: ON is similar to pressing the run button and will take you up one menu level. It will only enable the load if you are at the top menu level. Send multiple LOAD ON commands until you see the realtime output indicate the load is on.
 NOTE: OFF disables the load but does not return you to the menu. Use the hardware run button if you need to get in to the menu
 
