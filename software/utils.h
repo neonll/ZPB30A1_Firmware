@@ -14,7 +14,7 @@ void delay10ms(uint32_t d);
  */
 
 #ifndef F_CPU
-#warning F_CPU is not defined!
+#error F_CPU is not defined!
 #endif
 
 /*
@@ -25,16 +25,16 @@ void delay10ms(uint32_t d);
 #define T_COUNT(x) (( F_CPU * x / 1000000UL )-5)/5)
 static inline void _delay_cycl( unsigned short __ticks )
 {
-	__asm__("nop\n nop\n");
-	do { 		// ASM: ldw X, #tick; lab$: decw X; tnzw X; jrne lab$
+    __asm__("nop\n nop\n");
+    do {         // ASM: ldw X, #tick; lab$: decw X; tnzw X; jrne lab$
                 __ticks--;//      2c;                 1c;     2c    ; 1/2c
         } while ( __ticks );
-	__asm__("nop\n");
+    __asm__("nop\n");
 }
 
 static inline void _delay_us( const unsigned short __us )
 {
-	_delay_cycl( (unsigned short)( T_COUNT(__us) );
+    _delay_cycl( (unsigned short)( T_COUNT(__us) );
 }
 
 void delay_ms(uint16_t ms);

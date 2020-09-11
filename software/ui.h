@@ -26,4 +26,7 @@ void ui_edit_value(uint8_t event, const MenuItem *item);
 void ui_edit_setpoint(uint8_t event, const MenuItem *item);
 void ui_active(uint8_t event, const MenuItem *item);
 void ui_error_handler(uint8_t event, const MenuItem *item);
+
+void ui_activate_load();
+void ui_disable_load();
 #endif

@@ -4,6 +4,18 @@
 
 void uart_init();
 void uart_timer();
+void uart_handler();
+
+#define CMD_RESET '!'
+
+typedef enum {
+    ERR_NONE,
+    ERR_MODE_INVALID,
+    ERR_OUT_OF_RANGE,
+    ERR_NOT_A_DIGIT,
+    ERR_SHOULD_NOT_HAPPEN, // = Internal logic error
+    ERR_INVALID_COMMAND,
+} error_codes_t;
 
 #define UART_BUFFER_SIZE (128) //Must be a power of 2
 #define UART_BUFFER_MASK (UART_BUFFER_SIZE - 1ul)

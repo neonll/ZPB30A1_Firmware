@@ -12,6 +12,9 @@
 #define F_UI_SWITCH_DISPLAY 0.2
 #define F_UI_UPDATE_DISPLAY 2
 
+#define BRIGHTNESS_BRIGHT 4
+#define BRIGHTNESS_DIM 2
+
 /* F_POWER_CALC must be an integer 1 <= f <= F_SYSTICK and an
    integer divider of F_SYSTICK */
 #define F_POWER_CALC 100
@@ -29,7 +32,7 @@
 #define CUR_MAX 10000 //mA
 #define CUR_DOT_OFFSET 3
 
-#define POW_MIN 0 //mW
+#define POW_MIN 1 //mW
 #define POW_MAX 60000 //mW: maximum settable power
 #define POW_DOT_OFFSET 3
 #define POW_ABS_MAX 65000 //mW: Current at which the load current is reduced
@@ -77,11 +80,9 @@
 #define ADC_CAL_SENSE_T 1326
 #define ADC_CAL_SENSE_M 36546
 
-/* ADC value at which reverse voltage protection is triggered. Corresponds to
-~-0.5V
- */
-#define ADC_LOAD_MIN  450 // ADC counts
-#define ADC_SENSE_MIN 430 // ADC counts
+/* ADC value at which reverse voltage protection is triggered. */
+#define ADC_LOAD_MIN  100 // ADC counts
+#define ADC_SENSE_MIN 100 // ADC counts
 #define ADC_12V_MIN 10000 // mV
 #define ADC_INPUT_MAX 35000 // mV
 
