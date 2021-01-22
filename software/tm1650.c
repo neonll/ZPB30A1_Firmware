@@ -2,7 +2,6 @@
 #include "config.h"
 #include "inc/stm8s_gpio.h"
 
-#define PIN_I2C_CLK PINC_SCL
 #define DIGIT_REG 0x68
 #define BRIGHTNESS_REG 0x48
 
@@ -66,37 +65,44 @@ static void i2c_write(uint8_t data, uint8_t pin)
 {
     uint8_t i;
     GPIO_DISPLAY->DDR |= pin;
-    for (i = 7; i < 255; i--) {
-        if (data & (1 << i)) {
-            GPIO_DISPLAY->ODR |= pin;
-        } else {
-            GPIO_DISPLAY->ODR &= ~pin;
+    
+    for(i = 7; i < 255; i--) 
+    {
+        if(data & (1 << i)) 
+        {
+            GPIO_DISPLAY->ODR |= PINC_SDA;
+        }
+        else
+        {
+            GPIO_DISPLAY->ODR &= ~PINC_SDA;
         }
         // Clock H/L
-        GPIO_DISPLAY->ODR |= PIN_I2C_CLK;
-        GPIO_DISPLAY->ODR &= ~PIN_I2C_CLK;
+        GPIO_DISPLAY->ODR |= pin;
+        GPIO_DISPLAY->ODR &= ~pin;
     }
     // We don't need the ACK, so just do a single clock H/L without reading
-    GPIO_DISPLAY->ODR |= PIN_I2C_CLK;
-    GPIO_DISPLAY->ODR &= ~PIN_I2C_CLK;
+    GPIO_DISPLAY->ODR |= pin;
+    GPIO_DISPLAY->ODR &= ~pin;
 }
 
+// "pin" now needs to select the clock, rather than the common data pin
 void disp_write(uint8_t addr, uint8_t data, uint8_t pin)
 {
-    pin = (pin == DP_TOP)?DP_TOP_PIN:DP_BOT_PIN;
+    pin = (pin == DP_TOP) ? DP_TOP_PIN : DP_BOT_PIN;    // which clk pin?
+
     // Start sequence
-    GPIO_DISPLAY->ODR |= pin;         // SDA HIGH
-    GPIO_DISPLAY->ODR |= PIN_I2C_CLK;  // SCL HIGH
-    GPIO_DISPLAY->ODR &= ~pin;        // SDA LOW
-    GPIO_DISPLAY->ODR &= ~PIN_I2C_CLK; // SCL LOW
+    GPIO_DISPLAY->ODR |= PINC_SDA;  // SDA HIGH
+    GPIO_DISPLAY->ODR |= pin;         // SCL HIGH
+    GPIO_DISPLAY->ODR &= ~PINC_SDA; // SDA LOW
+    GPIO_DISPLAY->ODR &= ~pin;        // SCL LOW
 
     i2c_write(addr, pin);
     i2c_write(data, pin);
 
     // Stop sequence
-    GPIO_DISPLAY->ODR &= ~pin;        // SDA LOW
-    GPIO_DISPLAY->ODR |= PIN_I2C_CLK;  // SCL HIGH
-    GPIO_DISPLAY->ODR |= pin;         // SDA HIGH
+    GPIO_DISPLAY->ODR &= ~PINC_SDA;        // SDA LOW
+    GPIO_DISPLAY->ODR |= pin;  // SCL HIGH
+    GPIO_DISPLAY->ODR |= PINC_SDA;         // SDA HIGH
 }
 
 void disp_char(uint8_t position, uint8_t c, uint8_t dot, uint8_t pin)

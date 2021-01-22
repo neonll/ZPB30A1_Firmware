@@ -104,9 +104,9 @@
 #define PINC_OL_DETECT (1u<<2)
 #define PINC_ENC_P (1u<<3)
 #define PINC_RUN_P (1u<<4)
-#define PINC_SCL (1u<<5)
-#define PINC_SDA1 (1u<<6)
-#define PINC_SDA2 (1u<<7)
+//#define PINC_SCL (1u<<5)
+//#define PINC_SDA1 (1u<<6)
+//#define PINC_SDA2 (1u<<7)
 
 // port D
 #define PIND_FAN (1u<<0)
@@ -123,8 +123,16 @@
 
 
 #define GPIO_DISPLAY GPIOC
-#define DP_TOP_PIN PINC_SDA2
-#define DP_BOT_PIN PINC_SDA1
+// old display pins
+//#define DP_TOP_PIN PINC_SDA2
+//#define DP_BOT_PIN PINC_SDA1
+//#define PIN_I2C_CLK PINC_SCL
+// new display pins
+#define PINC_SDA   (1u << 5)
+#define PINC_SCL1  (1u << 6)
+#define PINC_SCL2  (1u << 7)
+#define DP_TOP_PIN PINC_SCL2
+#define DP_BOT_PIN PINC_SCL1
 #define LED_V       0x01
 #define LED_AH      0x02
 #define LED_WH      0x04
