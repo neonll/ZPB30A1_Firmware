@@ -155,6 +155,18 @@ Requests the load to activate or deactivate.
 NOTE: ON is similar to pressing the run button and will take you up one menu level. It will only enable the load if you are at the top menu level. Send multiple LOAD ON commands until you see the realtime output indicate the load is on.
 NOTE: OFF disables the load but does not return you to the menu. Use the hardware run button if you need to get in to the menu
 
+#### GETS
+Requests current settings.
+
+#### SETLOG [HUMAN|ESP|DEMAND]
+Set log type.
+   * HUMAN = Human readable
+   * ESP = Formatted for ESP logger
+   * DEMAND = On demand by command GETLOG
+   
+#### GETLOG
+Requests log
+
 ## History
 This firmware started as a project to extend the firmware written by
 [soundstorm](https://github.com/ArduinoHannover/ZPB30A1_Firmware) but it turned
