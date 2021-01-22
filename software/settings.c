@@ -34,11 +34,12 @@ void settings_init()
         settings.setpoints[MODE_CW] = 30000;
         settings.setpoints[MODE_CR] = 50000;
         settings.setpoints[MODE_CV] = 10000;
-        settings.beeper_enabled = 1;
+        settings.beeper_enabled = 0;
         settings.cutoff_enabled = 0;
-        settings.cutoff_voltage = 3300;
+        settings.cutoff_voltage = 10500;
         settings.current_limit = CUR_MAX;
         settings.max_power_action = MAX_P_LIM;
+        settings.log_type = LOG_ESP;
     }
 }
 

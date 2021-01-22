@@ -11,6 +11,7 @@ DATE: September 11th, 2020
 #include "timer.h"
 #include "ui.h"
 #include "menu_items.h"
+#include "adc.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -127,6 +128,27 @@ static const Command Commands[] = {
             "  see the realtime output indicate the load is on.\n"
             "  NOTE: OFF disables the load but does not return you to the menu.\n"
             "  Use the hardware run button if you need to get in to the menu\n"
+  },
+  //GET SETTINGS
+  {	.name = "GETS",
+  	.handler = &remote_get_settings,
+  	.help = "  GETS\n"
+  			"  Requests settings\n"
+  },
+  //SETLOG [HUMAN|ESP|DEMAND]
+  { .name = "SETLOG",
+    .handler = &remote_setlog,
+    .help = "  SETLOG [HUMAN|ESP|DEMAND]\n"
+            "  Set log type.\n"
+            "  HUMAN = Human readable\n"
+            "  ESP = Formatted for ESP logger\n"
+            "  DEMAND = On demand by command GETLOG\n"
+  },
+  //GET LOG
+  {	.name = "GETLOG",
+  	.handler = &remote_get_log,
+  	.help = "  GETLOG\n"
+  			"  Requests log\n"
   }
 };
 
@@ -192,6 +214,125 @@ void remote_setr (uint8_t *data, Command *cmd) {
     printf("ERROR Invalid command data \"%s\"\n", data);
     printf("Must be %d <= value <= %d\n", R_MIN, R_MAX);
   }
+}
+
+//GETS
+void remote_get_settings (uint8_t *data, Command *cmd) {
+	// mode,setpoints[mode],beeper_enabled,cutoff_enabled,cutoff_voltage,current_limit,max_power_action\n
+	switch (settings.mode) {
+		case MODE_CC: 
+			printf("CC");
+			break;
+		case MODE_CV: 
+			printf("CV");
+			break;
+		case MODE_CR: 
+			printf("CR");
+			break;
+		case MODE_CW: 
+			printf("CW");
+			break;
+		default: 
+			printf("XX");
+			break;
+	}
+	printf(",");
+	printf("%u,", settings.setpoints[settings.mode]);
+	printf("%s,", settings.beeper_enabled ? "true" : "false");
+	printf("%s,", settings.cutoff_enabled ? "true" : "false");
+	printf("%u,", settings.cutoff_voltage);
+	printf("%u,", settings.current_limit);
+	printf("%s\n", settings.max_power_action == MAX_P_LIM ? "true" : "false");
+}
+
+//SETLOG [HUMAN|ESP|DEMAND]
+void remote_setlog(uint8_t *data, Command *cmd) {
+  if (strcmp(data, "HUMAN") == 0) {
+    settings.log_type = LOG_HUMAN;
+    printf("Log type set to human readable\n");
+  } else if (strcmp(data, "ESP") == 0) {
+    settings.log_type = LOG_ESP;
+    printf("Log type set to ESP format\n");
+  } else if (strcmp(data, "DEMAND") == 0) {
+    settings.log_type = LOG_DEMAND;
+    printf("Log type set to on demand\n");
+  } else {
+    printf("ERROR Invalid command data \"%s\"\n", data);
+  }
+}
+
+//GETLOG
+void remote_get_log(uint8_t *data, Command *cmd) {
+  if (settings.log_type == LOG_HUMAN) {
+		static uint16_t timer = 0;
+		static uint8_t cnt = 0;
+		timer++;
+		//Output one item each systick, but only start output with F_LOG
+		if (cnt || (timer == F_SYSTICK/F_LOG)) {
+			timer = 0;
+			cnt++;
+			if (cnt == 1) {
+				char status = ' ';
+				if (load_active) {
+					status = load_regulated?'A':'U';
+				}
+				printf("%c %d ", status, error);
+			} else if (cnt == 2) {
+				printf("T %3u ", temperature);
+			} else if (cnt == 3) {
+				printf("Vi %5u ", v_12V);
+			} else if (cnt == 4) {
+				printf("Vl %5u ", v_load);
+			} else if (cnt == 5) {
+				printf("Vs %5u ", v_sense);
+			} else if (cnt == 6) {
+				printf("I %5u ", actual_current_setpoint);
+			} else if (cnt == 7) {
+				printf("mWs %10lu ", mWatt_seconds);
+			} else if (cnt == 8) {
+				printf("mAs %10lu ", mAmpere_seconds);
+			} else {
+				printf("\r\n");
+				cnt = 0;
+			}
+		}
+	}
+	else if (settings.log_type == LOG_ESP) {
+		static uint16_t timer = 0;
+		static uint8_t cnt = 0;
+		timer++;
+		//Output one item each systick, but only start output with F_LOG
+		if (cnt || (timer == F_SYSTICK/F_LOG)) {
+			timer = 0;
+			cnt++;
+			if (cnt == 1) {
+				char status = ' ';
+				if (load_active) {
+					status = load_regulated?'A':'U';
+				}
+				else
+					status = 'N';
+				printf("%c %d,", status, error);
+			} else if (cnt == 2) {
+				printf("%3u,", temperature);
+			} else if (cnt == 3) {
+				printf("%5u,", v_12V);
+			} else if (cnt == 4) {
+				printf("%5u,", v_load);
+			} else if (cnt == 5) {
+				printf("%5u,", v_sense);
+			} else if (cnt == 6) {
+				printf("%5u,", actual_current_setpoint);
+			} else if (cnt == 7) {
+				printf("%10lu,", mWatt_seconds);
+			} else if (cnt == 8) {
+				printf("%10lu", mAmpere_seconds);
+			} else {
+				printf("\r\n");
+				cnt = 0;
+			}
+		}
+	}
 }
 
 //SETP [power] #mW 0(POW_MIN)-60000(POW_MAX)

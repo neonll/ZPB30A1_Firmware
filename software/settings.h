@@ -16,6 +16,12 @@ typedef enum {
     MAX_P_LIM = 1,
 } max_power_action_t;
 
+typedef enum {
+    LOG_HUMAN,
+    LOG_ESP,
+    LOG_DEMAND
+} log_type_t;
+
 typedef struct {
     sink_mode_t mode;
     uint16_t setpoints[NUM_MODES]; // CC (mA)/CW(mW)/CR/CV(mV)
@@ -24,6 +30,7 @@ typedef struct {
     uint16_t cutoff_voltage; //mV
     uint16_t current_limit; //mA
     uint8_t max_power_action;
+    log_type_t log_type;
 } settings_t;
 
 extern settings_t settings;
